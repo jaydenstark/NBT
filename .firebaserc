@@ -1,5 +1,7 @@
 {
-  "projects": {},
+  "projects": {
+    "default": "nbt-001"
+  },
   "targets": {},
   "etags": {}
 }

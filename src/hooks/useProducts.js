@@ -5,11 +5,63 @@ import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'fireb
 import { db } from '../lib/firebase';
 
 export function useProducts(initialProducts = []) {
-  const [sheetProducts] = useState(initialProducts);
+  const [sheetProducts, setSheetProducts] = useState(initialProducts);
   const [firestoreProducts, setFirestoreProducts] = useState([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const products = [...firestoreProducts, ...sheetProducts];
+  // If initialProducts is empty, fetch them from Google Sheets on the client side
+  useEffect(() => {
+    if (sheetProducts && sheetProducts.length > 0) return;
+
+    const fetchSheetProducts = async () => {
+      try {
+        const Papa = (await import('papaparse')).default;
+        const sheetUrl = 'https://docs.google.com/spreadsheets/d/1pHzmSNsXpPdrJcGQ5kI4ZNsAaUNVeXt6knle7C_sNG0/export?format=csv&gid=1847675030';
+        const response = await fetch(sheetUrl);
+        const csvText = await response.text();
+        const results = Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true,
+        });
+
+        const fetched = [];
+        for (const row of results.data) {
+          if (!row.Name) continue;
+          fetched.push({
+            id: `sheet_${row.Name}_${row.Size}`,
+            slug: row.Name.replace(/\s+/g, '-').toLowerCase(),
+            name: row.Name,
+            brand: row.Brand || 'Neat Product',
+            type: row.Type?.toLowerCase() === 'industrial' ? 'industrial' : 'retail',
+            category: row.Category || 'General',
+            description: row.Description || '',
+            image: row.Image || '/PRODUCTS%20/Neat/neat-all-purpose-floral-2l.png',
+            sizes: [
+              {
+                size: row.Size || '1L',
+                price: parseFloat(row.Price) || 0,
+                qtyInBox: parseInt(row.QtyInBox) || 1
+              }
+            ]
+          });
+        }
+        setSheetProducts(fetched);
+      } catch (error) {
+        console.error("Failed to fetch initial products from client side:", error);
+      }
+    };
+
+    fetchSheetProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sheetProducts?.length]);
+
+  // Deduplicate products dynamically by Name so Firestore uploads override seed data cleanly!
+  const products = [
+    ...firestoreProducts,
+    ...sheetProducts.filter(
+      sp => !firestoreProducts.some(fp => fp.name?.toLowerCase().trim() === sp.name?.toLowerCase().trim())
+    )
+  ];
 
   useEffect(() => {
 

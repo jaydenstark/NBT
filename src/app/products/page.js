@@ -1,12 +1,16 @@
-import ClientPage from './ClientPage';
+import ProductsClientPage from './ProductsClientPage';
 import Papa from 'papaparse';
-import { redirect } from 'next/navigation';
 
 // Revalidate the data every 60 seconds (incremental static regeneration)
 export const revalidate = 60;
 
-export default async function Page() {
-  redirect('/products');
+export const metadata = {
+  title: 'Chemical Catalog | Buy Premium Cleaning & Industrial Chemicals | Neat Brand Trade',
+  description: 'Browse our complete catalog of precision-formulated cleaning products and raw industrial chemicals. Filter by brand (Neat, Deva, NBT Global) or category.',
+  keywords: 'cleaning product catalog, industrial chemical catalog, liquid detergents, disinfectants, laundry detergents, household cleaners, Neat, Deva, NBT Global',
+};
+
+export default async function ProductsPage() {
   let initialProducts = [];
 
   try {
@@ -27,6 +31,7 @@ export default async function Page() {
       
       initialProducts.push({
         id: `sheet_${row.Name}_${row.Size}`,
+        slug: row.Name.replace(/\s+/g, '-').toLowerCase(),
         name: row.Name,
         brand: row.Brand || 'Neat Product',
         type: row.Type?.toLowerCase() === 'industrial' ? 'industrial' : 'retail',
@@ -43,8 +48,8 @@ export default async function Page() {
       });
     }
   } catch (error) {
-    console.error("Failed to fetch initial products from Google Sheets:", error);
+    console.error("Failed to fetch initial products for products page:", error);
   }
 
-  return <ClientPage initialProducts={initialProducts} />;
+  return <ProductsClientPage initialProducts={initialProducts} />;
 }

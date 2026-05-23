@@ -277,3 +277,62 @@ ul {
     text-align: center;
   }
 }
+
+/* Premium Print Invoice Utilities */
+@media print {
+  /* Hide all elements except the invoice print wrapper */
+  body * {
+    visibility: hidden !important;
+  }
+  
+  .invoice-modal-backdrop {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    position: static !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .invoice-print-wrapper, .invoice-print-wrapper * {
+    visibility: visible !important;
+  }
+
+  .invoice-print-wrapper {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .invoice-actions-panel {
+    display: none !important;
+  }
+
+  .invoice-table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+  
+  .invoice-table th, .invoice-table td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 8px !important;
+  }
+  
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+
+
