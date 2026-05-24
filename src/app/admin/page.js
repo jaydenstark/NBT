@@ -15,6 +15,13 @@ function generateDiscountCode(businessName) {
   return `NBT-${prefix}-${randNum}`;
 }
 
+// Helper to extract package size from product text
+function extractSizeFromText(text) {
+  if (!text) return '';
+  const match = text.match(/\b(\d+(?:\.\d+)?)\s*(L|l|Lt|lt|Litre|litre|ml|ML|Ml|kg|KG|Kg|g|G)\b/i);
+  return match ? match[0] : '';
+}
+
 export default function AdminDashboard() {
   const { products, isLoaded, addProduct, deleteProduct, updateProduct } = useProducts();
   const [activeTab, setActiveTab] = useState('orders');
@@ -497,7 +504,6 @@ Thank you for your business! 🧪🛡️`;
   // Manufacturers & Purchase Orders States
   const [dbManufacturers, setDbManufacturers] = useState([]);
   const [dbManufacturerPOs, setDbManufacturerPOs] = useState([]);
-  const [mfgSubTab, setMfgSubTab] = useState('suppliers');
   const [showAddMfgModal, setShowAddMfgModal] = useState(false);
   const [showAddPOModal, setShowAddPOModal] = useState(false);
   const [viewingPO, setViewingPO] = useState(null);
@@ -4121,246 +4127,7 @@ Thank you! 🧪🛡️`;
           </div>
         )}
 
-        {/* kept for backward compat — redirect if old tab is active */}
-        {activeTab === 'manufacturers' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', animation: 'slideUp 0.4s var(--transition)' }}>
-            
-            {/* Header / Command Center */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(11, 35, 57, 0.95)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(16px)', padding: '2rem', borderRadius: '16px', color: 'white', flexWrap: 'wrap', gap: '20px' }}>
-              <div>
-                <h3 style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.45rem', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  🏭 Manufacturer & Purchase Order Suite
-                </h3>
-                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', margin: '6px 0 0 0', lineHeight: 1.5 }}>
-                  Manage raw materials, packaging suppliers, and track formal B2B supply purchase agreements with calculated GRA B2B levies.
-                </p>
-              </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button 
-                  onClick={() => setShowAddMfgModal(true)} 
-                  className="btn btn-primary" 
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', borderRadius: '10px', fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer' }}
-                >
-                  ➕ Add Manufacturer
-                </button>
-                <button 
-                  onClick={() => setShowAddPOModal(true)} 
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', borderRadius: '10px', fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', background: 'var(--secondary)', color: 'white', border: 'none' }}
-                >
-                  📝 Create P.O.
-                </button>
-              </div>
-            </div>
 
-            {/* Premium Stats Strip */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
-              <div style={{ background: 'white', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Suppliers</span>
-                  <span style={{ fontSize: '1.5rem' }}>🏢</span>
-                </div>
-                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--primary)', fontFamily: 'Outfit' }}>{activeManufacturers.length}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Active chemical & bottle partners</div>
-              </div>
-              <div style={{ background: 'white', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Active Contracts</span>
-                  <span style={{ fontSize: '1.5rem' }}>📦</span>
-                </div>
-                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--secondary)', fontFamily: 'Outfit' }}>
-                  {activeManufacturerPOs.filter(po => po.status === 'Draft' || po.status === 'Sent').length}
-                </div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Pending feedstock deliveries</div>
-              </div>
-              <div style={{ background: 'white', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Capital Committed</span>
-                  <span style={{ fontSize: '1.5rem' }}>💳</span>
-                </div>
-                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--primary)', fontFamily: 'Outfit' }}>
-                  GH₵ {activeManufacturerPOs.reduce((acc, po) => acc + po.totalAmount, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Gross capital procurement volume</div>
-              </div>
-            </div>
-
-            {/* Sub-Tabs Selector */}
-            <div style={{ display: 'flex', gap: '15px', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
-              <button 
-                onClick={() => setMfgSubTab('suppliers')}
-                style={{ background: 'none', border: 'none', padding: '10px 15px', fontSize: '0.92rem', fontWeight: 700, color: mfgSubTab === 'suppliers' ? 'var(--primary)' : 'var(--text-muted)', borderBottom: mfgSubTab === 'suppliers' ? '3px solid var(--primary)' : '3px solid transparent', cursor: 'pointer', transition: 'all 0.2s' }}
-              >
-                🏢 Suppliers Directory
-              </button>
-              <button 
-                onClick={() => setMfgSubTab('pos')}
-                style={{ background: 'none', border: 'none', padding: '10px 15px', fontSize: '0.92rem', fontWeight: 700, color: mfgSubTab === 'pos' ? 'var(--primary)' : 'var(--text-muted)', borderBottom: mfgSubTab === 'pos' ? '3px solid var(--primary)' : '3px solid transparent', cursor: 'pointer', transition: 'all 0.2s' }}
-              >
-                📝 Purchase Orders Log
-              </button>
-            </div>
-
-            {/* Suppliers Tab Content */}
-            {mfgSubTab === 'suppliers' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '1.5rem' }}>
-                {activeManufacturers.map((mfg) => (
-                  <div key={mfg.id} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: '16px', padding: '1.5rem', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '1.25rem', transition: 'transform 0.25s', cursor: 'default' }}
-                       onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-3px)'}
-                       onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
-                    
-                    <div>
-                      <h4 style={{ margin: 0, fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.15rem', color: 'var(--primary)' }}>{mfg.name}</h4>
-                      <span style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--secondary)', display: 'block', marginTop: '4px' }}>📍 {mfg.location}</span>
-                    </div>
-
-                    <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', border: '1px solid #ECEFF1', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.82rem' }}>
-                      <div>🧑‍💼 <strong>Contact Person:</strong> {mfg.contactPerson}</div>
-                      <div>📞 <strong>Phone:</strong> <a href={"tel:" + mfg.phone} style={{ color: 'var(--secondary)', fontWeight: 700 }}>{mfg.phone}</a></div>
-                      {mfg.email && <div>✉️ <strong>Email:</strong> <a href={"mailto:" + mfg.email} style={{ color: 'var(--primary)', fontWeight: 700 }}>{mfg.email}</a></div>}
-                    </div>
-
-                    <div>
-                      <span style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>Feedstock / Packaging Materials</span>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                        {mfg.materials.split(',').map((mat, i) => (
-                          <span key={i} style={{ background: 'rgba(43, 140, 138, 0.08)', color: 'var(--primary)', border: '1px solid rgba(43, 140, 138, 0.15)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700 }}>{mat.trim()}</span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {mfg.notes && (
-                      <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)', background: '#fffbeb', border: '1px solid #fef3c7', padding: '8px 12px', borderRadius: '8px', fontStyle: 'italic' }}>
-                        📌 {mfg.notes}
-                      </p>
-                    )}
-
-                    <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      <a 
-                        href={`https://wa.me/${formatGhanaPhone(mfg.phone)}?text=${encodeURIComponent(`Hello ${mfg.contactPerson}, this is the Procurement Desk at Neat Brand Trade (NBT). We hope this finds you well. We'd like to check feedstock pricing and supply availability...`)}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="btn" 
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#25D366', color: 'white', padding: '8px 12px', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700, textDecoration: 'none', border: 'none', flex: 1, justifyContent: 'center' }}
-                      >
-                        💬 WhatsApp Partner
-                      </a>
-                      <button
-                        onClick={() => handleOpenPriceList(mfg)}
-                        className="btn"
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, rgba(43, 140, 138, 0.08), rgba(59, 130, 246, 0.08))', color: 'var(--primary)', padding: '8px 12px', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700, border: '1px solid rgba(43, 140, 138, 0.25)', flex: 1, justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(43, 140, 138, 0.15)'; e.currentTarget.style.transform = 'scale(1.02)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(43, 140, 138, 0.08), rgba(59, 130, 246, 0.08))'; e.currentTarget.style.transform = 'none'; }}
-                      >
-                        📋 Price List
-                        {mfg.priceList && mfg.priceList.length > 0 && (
-                          <span style={{ background: 'var(--primary)', color: 'white', borderRadius: '999px', padding: '1px 7px', fontSize: '0.68rem', fontWeight: 800 }}>
-                            {mfg.priceList.length}
-                          </span>
-                        )}
-                      </button>
-                      {mfg.priceListUrl && (
-                        <a 
-                          href={mfg.priceListUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="btn" 
-                          style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(43, 140, 138, 0.05)', color: 'var(--primary)', padding: '8px 12px', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700, textDecoration: 'none', border: '1px solid rgba(43, 140, 138, 0.15)', flex: 1, justifyContent: 'center', transition: 'all 0.2s' }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(43, 140, 138, 0.1)'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(43, 140, 138, 0.05)'}
-                        >
-                          📥 Download File
-                        </a>
-                      )}
-                    </div>
-
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* POs Tab Content */}
-            {mfgSubTab === 'pos' && (
-              <div style={{ background: 'white', borderRadius: '16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                  <thead>
-                    <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border)', textAlign: 'left', fontWeight: 700 }}>
-                      <th style={{ padding: '16px' }}>PO Number</th>
-                      <th style={{ padding: '16px' }}>Manufacturer</th>
-                      <th style={{ padding: '16px' }}>Items Total</th>
-                      <th style={{ padding: '16px' }}>Tax Details</th>
-                      <th style={{ padding: '16px' }}>Capital committed</th>
-                      <th style={{ padding: '16px' }}>Status</th>
-                      <th style={{ padding: '16px', textAlign: 'right' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {activeManufacturerPOs.map((po) => {
-                      const itemsCount = po.items?.reduce((acc, i) => acc + i.qty, 0) || 0;
-                      return (
-                        <tr key={po.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                          <td style={{ padding: '16px', fontWeight: 800, color: 'var(--primary)' }}>📄 {po.poNumber}</td>
-                          <td style={{ padding: '16px' }}>
-                            <div style={{ fontWeight: 700 }}>{po.manufacturerName}</div>
-                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>📞 {po.manufacturerPhone}</span>
-                          </td>
-                          <td style={{ padding: '16px', fontWeight: 600 }}>{itemsCount} units ({po.items?.length || 0} unique lines)</td>
-                          <td style={{ padding: '16px' }}>
-                            <span style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, background: po.vatApplied ? 'rgba(59, 130, 246, 0.08)' : 'rgba(100, 116, 139, 0.08)', color: po.vatApplied ? '#3b82f6' : '#64748b', border: po.vatApplied ? '1px solid rgba(59,130,246,0.15)' : '1px solid rgba(100,116,139,0.15)' }}>
-                              {po.vatApplied ? 'GRA VAT & Levies (21.9%)' : 'VAT Exempt / Zero-Rated'}
-                            </span>
-                          </td>
-                          <td style={{ padding: '16px', fontWeight: 800, color: 'var(--text-main)' }}>
-                            GH₵ {po.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </td>
-                          <td style={{ padding: '16px' }}>
-                            <select 
-                              value={po.status} 
-                              onChange={(e) => handleUpdatePOStatus(po.id, e.target.value)}
-                              style={{ padding: '6px 10px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', background: po.status === 'Delivered' ? '#dcfce7' : po.status === 'Sent' ? '#dbeafe' : po.status === 'Cancelled' ? '#fee2e2' : '#f1f5f9', color: po.status === 'Delivered' ? '#166534' : po.status === 'Sent' ? '#1e40af' : po.status === 'Cancelled' ? '#991b1b' : '#334155' }}
-                            >
-                              <option value="Draft">Draft</option>
-                              <option value="Sent">Sent</option>
-                              <option value="Delivered">Delivered</option>
-                              <option value="Cancelled">Cancelled</option>
-                            </select>
-                          </td>
-                          <td style={{ padding: '16px', textAlign: 'right' }}>
-                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                              <button 
-                                onClick={() => setViewingPO(po)}
-                                className="btn" 
-                                style={{ background: '#f1f5f9', color: 'var(--text-main)', border: '1px solid var(--border)', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.74rem', fontWeight: 700 }}
-                                title="Print PO Voucher"
-                              >
-                                🖨️ Print
-                              </button>
-                              <a 
-                                href={`https://wa.me/${formatGhanaPhone(po.manufacturerPhone)}?text=${encodeURIComponent(getWhatsAppPOText(po))}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="btn" 
-                                style={{ display: 'inline-flex', alignItems: 'center', background: '#25D366', color: 'white', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.74rem', fontWeight: 700, textDecoration: 'none' }}
-                                title="Dispatch PO via WhatsApp"
-                              >
-                                💬 B2B Dispatch
-                              </a>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    {activeManufacturerPOs.length === 0 && (
-                      <tr>
-                        <td colSpan="7" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>📝 No Purchase Orders generated yet. Click "Create P.O." at the top to start.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-          </div>
-        )}
 
         {/* TAB G: STORE SETTINGS WORKSPACE */}
         {activeTab === 'settings' && (
@@ -5974,8 +5741,13 @@ Thank you! 🧪🛡️`;
                               placeholder="e.g. Sulphonic Acid 96%" 
                               value={item.name} 
                               onChange={e => {
+                                const val = e.target.value;
                                 const newItems = [...poForm.items];
-                                newItems[index].name = e.target.value;
+                                newItems[index].name = val;
+                                const extracted = extractSizeFromText(val);
+                                if (extracted) {
+                                  newItems[index].size = extracted;
+                                }
                                 setPoForm({ ...poForm, items: newItems });
                                 setActiveSuggestionIndex(index);
                               }}
@@ -6011,8 +5783,13 @@ Thank you! 🧪🛡️`;
                                         onClick={() => {
                                           const newItems = [...poForm.items];
                                           newItems[index].name = p.name;
-                                          if (defaultSize) {
+                                          const extracted = extractSizeFromText(p.name);
+                                          if (extracted) {
+                                            newItems[index].size = extracted;
+                                          } else if (defaultSize) {
                                             newItems[index].size = defaultSize.size || '1L';
+                                          }
+                                          if (defaultSize) {
                                             newItems[index].unitPrice = defaultSize.price || 0;
                                           }
                                           setPoForm({ ...poForm, items: newItems });
