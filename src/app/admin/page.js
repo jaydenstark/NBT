@@ -5723,8 +5723,8 @@ Thank you! 🧪🛡️`;
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: '#f8fafc', padding: '14px', borderRadius: '14px', border: '1px solid var(--border)' }}>
                       
                       {/* Zoho Books Invoicing Style Header */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '3fr 1.2fr 1.1fr 100px 32px', gap: '10px', padding: '0 8px 6px 8px', borderBottom: '1.5px solid #cbd5e1', marginBottom: '4px', fontSize: '0.72rem', fontWeight: 855, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
-                        <div>Item & Description</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '3.2fr 1.2fr 1.1fr 100px 32px', gap: '10px', padding: '0 8px 6px 8px', borderBottom: '1.5px solid #cbd5e1', marginBottom: '4px', fontSize: '0.72rem', fontWeight: 855, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                        <div>Item</div>
                         <div>Qty</div>
                         <div>Rate</div>
                         <div style={{ textAlign: 'right', paddingRight: '8px' }}>Amount</div>
@@ -5732,116 +5732,101 @@ Thank you! 🧪🛡️`;
                       </div>
 
                       {poForm.items.map((item, index) => (
-                        <div key={index} style={{ display: 'grid', gridTemplateColumns: '3fr 1.2fr 1.1fr 100px 32px', gap: '10px', alignItems: 'center' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
-                            <div style={{ position: 'relative', width: '100%' }} onMouseLeave={() => setActiveSuggestionIndex(null)}>
-                              <input 
-                                required
-                                type="text" 
-                                placeholder="Item / Material Name" 
-                                value={item.name} 
-                                onChange={e => {
-                                  const val = e.target.value;
-                                  const newItems = [...poForm.items];
-                                  newItems[index].name = val;
-                                  const extracted = extractSizeFromText(val);
-                                  if (extracted) {
-                                    newItems[index].size = extracted;
-                                  }
-                                  setPoForm({ ...poForm, items: newItems });
-                                  setActiveSuggestionIndex(index);
-                                }}
-                                onFocus={() => setActiveSuggestionIndex(index)}
-                                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.82rem', background: 'white', color: 'var(--text-main)', outline: 'none', transition: 'var(--transition)', boxSizing: 'border-box' }} 
-                              />
-                              {activeSuggestionIndex === index && item.name.trim().length > 0 && (() => {
-                                const matchingProducts = products.filter(p => 
-                                  p.name?.toLowerCase().includes(item.name.toLowerCase()) ||
-                                  p.category?.toLowerCase().includes(item.name.toLowerCase())
-                                ).slice(0, 5);
-                                if (matchingProducts.length === 0) return null;
-                                return (
-                                  <div style={{
-                                    position: 'absolute',
-                                    top: '100%',
-                                    left: 0,
-                                    right: 0,
-                                    background: 'white',
-                                    borderRadius: '8px',
-                                    boxShadow: '0 8px 24px rgba(11, 35, 57, 0.15)',
-                                    border: '1px solid #cbd5e1',
-                                    zIndex: 9000,
-                                    marginTop: '4px',
-                                    maxHeight: '200px',
-                                    overflowY: 'auto'
-                                  }}>
-                                    {matchingProducts.map(p => {
-                                      const defaultSize = p.sizes?.[0];
-                                      return (
-                                        <div 
-                                          key={p.id}
-                                          onClick={() => {
-                                            const newItems = [...poForm.items];
-                                            newItems[index].name = p.name;
-                                            const extracted = extractSizeFromText(p.name);
-                                            if (extracted) {
-                                              newItems[index].size = extracted;
-                                            } else if (defaultSize) {
-                                              newItems[index].size = defaultSize.size || '1L';
-                                            }
-                                            if (defaultSize) {
-                                              newItems[index].unitPrice = defaultSize.price || 0;
-                                            }
-                                            setPoForm({ ...poForm, items: newItems });
-                                            setActiveSuggestionIndex(null);
-                                          }}
-                                          style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            padding: '8px 10px',
-                                            cursor: 'pointer',
-                                            transition: 'background 0.2s',
-                                            borderBottom: '1px solid #f1f5f9',
-                                            fontSize: '0.78rem',
-                                            textAlign: 'left'
-                                          }}
-                                          onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                        >
-                                          <img 
-                                            src={p.image} 
-                                            alt={p.name} 
-                                            style={{ width: '24px', height: '24px', objectFit: 'contain', background: '#f8fafc', borderRadius: '4px', padding: '1px' }} 
-                                          />
-                                          <div style={{ flexGrow: 1, minWidth: 0 }}>
-                                            <div style={{ fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                              {p.name}
-                                            </div>
-                                            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
-                                              {p.category} {defaultSize && `• GH₵ ${defaultSize.price}`}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                );
-                              })()}
-                            </div>
-                            
+                        <div key={index} style={{ display: 'grid', gridTemplateColumns: '3.2fr 1.2fr 1.1fr 100px 32px', gap: '10px', alignItems: 'center' }}>
+                          <div style={{ position: 'relative', width: '100%' }} onMouseLeave={() => setActiveSuggestionIndex(null)}>
                             <input 
                               required
                               type="text" 
-                              placeholder="Size / Packaging Description (e.g. 25L, 250kg Drum)" 
-                              value={item.size} 
+                              placeholder="Item / Material Name" 
+                              value={item.name} 
                               onChange={e => {
+                                const val = e.target.value;
                                 const newItems = [...poForm.items];
-                                newItems[index].size = e.target.value;
+                                newItems[index].name = val;
+                                const extracted = extractSizeFromText(val);
+                                if (extracted) {
+                                  newItems[index].size = extracted;
+                                }
                                 setPoForm({ ...poForm, items: newItems });
+                                setActiveSuggestionIndex(index);
                               }}
-                              style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.78rem', background: '#f8fafc', color: 'var(--text-main)', outline: 'none', transition: 'var(--transition)', boxSizing: 'border-box' }} 
+                              onFocus={() => setActiveSuggestionIndex(index)}
+                              style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.82rem', background: 'white', color: 'var(--text-main)', outline: 'none', transition: 'var(--transition)', boxSizing: 'border-box' }} 
                             />
+                            {activeSuggestionIndex === index && item.name.trim().length > 0 && (() => {
+                              const matchingProducts = products.filter(p => 
+                                p.name?.toLowerCase().includes(item.name.toLowerCase()) ||
+                                p.category?.toLowerCase().includes(item.name.toLowerCase())
+                              ).slice(0, 5);
+                              if (matchingProducts.length === 0) return null;
+                              return (
+                                <div style={{
+                                  position: 'absolute',
+                                  top: '100%',
+                                  left: 0,
+                                  right: 0,
+                                  background: 'white',
+                                  borderRadius: '8px',
+                                  boxShadow: '0 8px 24px rgba(11, 35, 57, 0.15)',
+                                  border: '1px solid #cbd5e1',
+                                  zIndex: 9000,
+                                  marginTop: '4px',
+                                  maxHeight: '200px',
+                                  overflowY: 'auto'
+                                }}>
+                                  {matchingProducts.map(p => {
+                                    const defaultSize = p.sizes?.[0];
+                                    return (
+                                      <div 
+                                        key={p.id}
+                                        onClick={() => {
+                                          const newItems = [...poForm.items];
+                                          newItems[index].name = p.name;
+                                          const extracted = extractSizeFromText(p.name);
+                                          if (extracted) {
+                                            newItems[index].size = extracted;
+                                          } else if (defaultSize) {
+                                            newItems[index].size = defaultSize.size || '1L';
+                                          }
+                                          if (defaultSize) {
+                                            newItems[index].unitPrice = defaultSize.price || 0;
+                                          }
+                                          setPoForm({ ...poForm, items: newItems });
+                                          setActiveSuggestionIndex(null);
+                                        }}
+                                        style={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '8px',
+                                          padding: '8px 10px',
+                                          cursor: 'pointer',
+                                          transition: 'background 0.2s',
+                                          borderBottom: '1px solid #f1f5f9',
+                                          fontSize: '0.78rem',
+                                          textAlign: 'left'
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
+                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                      >
+                                        <img 
+                                          src={p.image} 
+                                          alt={p.name} 
+                                          style={{ width: '24px', height: '24px', objectFit: 'contain', background: '#f8fafc', borderRadius: '4px', padding: '1px' }} 
+                                        />
+                                        <div style={{ flexGrow: 1, minWidth: 0 }}>
+                                          <div style={{ fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {p.name}
+                                          </div>
+                                          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                                            {p.category} {defaultSize && `• GH₵ ${defaultSize.price}`}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            })()}
                           </div>
 
                           {/* Incremental Qty selector controls */}
@@ -6056,7 +6041,7 @@ Thank you! 🧪🛡️`;
               <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2rem', fontSize: '0.82rem' }}>
                 <thead>
                   <tr style={{ background: '#0B2339', color: 'white', textAlign: 'left', fontWeight: 700 }}>
-                    <th style={{ padding: '10px', border: '1px solid #cbd5e1', width: '50%' }}>Item & Description</th>
+                    <th style={{ padding: '10px', border: '1px solid #cbd5e1', width: '50%' }}>Item</th>
                     <th style={{ padding: '10px', border: '1px solid #cbd5e1', width: '15%', textAlign: 'center' }}>Qty</th>
                     <th style={{ padding: '10px', border: '1px solid #cbd5e1', width: '15%', textAlign: 'right' }}>Rate</th>
                     <th style={{ padding: '10px', border: '1px solid #cbd5e1', width: '20%', textAlign: 'right' }}>Amount</th>
@@ -6065,10 +6050,7 @@ Thank you! 🧪🛡️`;
                 <tbody>
                   {viewingPO.items?.map((item, idx) => (
                     <tr key={idx} style={{ background: idx % 2 === 0 ? 'white' : '#f8fafc' }}>
-                      <td style={{ padding: '10px', border: '1px solid #e2e8f0', fontWeight: 700 }}>
-                        <div>{item.name}</div>
-                        {item.size && <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 500, marginTop: '2px' }}>Size: {item.size}</div>}
-                      </td>
+                      <td style={{ padding: '10px', border: '1px solid #e2e8f0', fontWeight: 700 }}>{item.name}</td>
                       <td style={{ padding: '10px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{item.qty}</td>
                       <td style={{ padding: '10px', border: '1px solid #e2e8f0', textAlign: 'right' }}>GH₵ {item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                       <td style={{ padding: '10px', border: '1px solid #e2e8f0', textAlign: 'right', fontWeight: 600 }}>GH₵ {item.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
