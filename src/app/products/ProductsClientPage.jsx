@@ -132,6 +132,7 @@ function ProductsContent({ initialProducts }) {
     return [];
   });
 
+  const [selectedBrands, setSelectedBrands] = useState([]);
   const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedAvailabilities, setSelectedAvailabilities] = useState([]);
@@ -145,7 +146,7 @@ function ProductsContent({ initialProducts }) {
   // 1. Enrich catalog products client-side deterministically based on product name hash
   const enrichedProducts = useMemo(() => {
     return products.map((p) => {
-      const hash = p.name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const hash = p.name ? p.name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 0;
       
       // Rating: between 4.0 and 5.0
       const rating = (4.0 + (hash % 11) / 10).toFixed(1);
@@ -166,8 +167,26 @@ function ProductsContent({ initialProducts }) {
         availability = 'Bulk Solutions';
       }
 
+      // Check if product contains 5L or 25L in name or sizes
+      let finalCategory = p.category;
+      const lowerName = p.name ? p.name.toLowerCase() : '';
+      let isBulk = false;
+      if (lowerName.includes('5l') || lowerName.includes('25l') || lowerName.includes('5 lt') || lowerName.includes('25 lt') || lowerName.includes('25lt')) {
+        isBulk = true;
+      }
+      if (p.sizes && Array.isArray(p.sizes)) {
+        if (p.sizes.some(s => s.size && (s.size.toLowerCase().includes('5l') || s.size.toLowerCase().includes('25l') || s.size.toLowerCase().includes('5 lt') || s.size.toLowerCase().includes('25 lt') || s.size.toLowerCase().includes('25lt')))) {
+          isBulk = true;
+        }
+      }
+      
+      if (isBulk) {
+        finalCategory = 'Bulk 5L & 25L';
+      }
+
       return {
         ...p,
+        category: finalCategory,
         rating: parseFloat(rating),
         popularity,
         date,
@@ -180,6 +199,12 @@ function ProductsContent({ initialProducts }) {
   const uniqueCategories = useMemo(() => {
     return Array.from(
       new Set(enrichedProducts.map((p) => p.category).filter(Boolean))
+    ).sort();
+  }, [enrichedProducts]);
+
+  const uniqueBrands = useMemo(() => {
+    return Array.from(
+      new Set(enrichedProducts.map((p) => p.brand).filter(Boolean))
     ).sort();
   }, [enrichedProducts]);
 
@@ -221,6 +246,12 @@ function ProductsContent({ initialProducts }) {
     );
   };
 
+  const handleBrandToggle = (brand) => {
+    setSelectedBrands((prev) =>
+      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
+    );
+  };
+
   const handlePriceToggle = (range) => {
     setSelectedPriceRanges((prev) =>
       prev.includes(range) ? prev.filter((r) => r !== range) : [...prev, range]
@@ -247,6 +278,7 @@ function ProductsContent({ initialProducts }) {
 
   const handleClearAll = () => {
     setSelectedCategories([]);
+    setSelectedBrands([]);
     setSelectedPriceRanges([]);
     setSelectedSizes([]);
     setSelectedAvailabilities([]);
@@ -256,6 +288,7 @@ function ProductsContent({ initialProducts }) {
 
   const hasActiveFilters = 
     selectedCategories.length > 0 ||
+    selectedBrands.length > 0 ||
     selectedPriceRanges.length > 0 ||
     selectedSizes.length > 0 ||
     selectedAvailabilities.length > 0 ||
@@ -282,6 +315,11 @@ function ProductsContent({ initialProducts }) {
 
       // Category matching (OR logic)
       if (selectedCategories.length > 0 && !selectedCategories.includes(p.category)) {
+        return false;
+      }
+
+      // Brand matching (OR logic)
+      if (selectedBrands.length > 0 && !selectedBrands.includes(p.brand)) {
         return false;
       }
 
@@ -320,7 +358,7 @@ function ProductsContent({ initialProducts }) {
 
       return true;
     });
-  }, [enrichedProducts, searchTerm, selectedCategories, selectedPriceRanges, selectedSizes, selectedAvailabilities, selectedRatings]);
+  }, [enrichedProducts, searchTerm, selectedCategories, selectedBrands, selectedPriceRanges, selectedSizes, selectedAvailabilities, selectedRatings]);
 
   // 7. Sorting Pipeline
   const sortedProducts = useMemo(() => {
@@ -390,6 +428,29 @@ function ProductsContent({ initialProducts }) {
                   color: isChecked ? 'var(--secondary)' : 'var(--text-muted)'
                 }}>
                   {count}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Brands */}
+      <div>
+        <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' }}>Brands</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {uniqueBrands.map((brand) => {
+            const isChecked = selectedBrands.includes(brand);
+            return (
+              <label key={brand} className="custom-checkbox">
+                <input
+                  type="checkbox"
+                  checked={isChecked}
+                  onChange={() => handleBrandToggle(brand)}
+                />
+                <span className="checkmark"></span>
+                <span style={{ fontWeight: isChecked ? 600 : 400, color: isChecked ? 'var(--secondary)' : 'var(--text-main)', fontSize: '0.9rem' }}>
+                  {brand}
                 </span>
               </label>
             );
