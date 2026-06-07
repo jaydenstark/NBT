@@ -116,11 +116,11 @@ export default function ClientPage({ initialProducts }) {
                   TRUSTED BY LEADING PLACES:
                 </span>
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                  <span className="trust-badge">🏢 Offices</span>
-                  <span className="trust-badge">🍽️ Restaurants</span>
-                  <span className="trust-badge">🏫 Schools</span>
-                  <span className="trust-badge">🏨 Hotels</span>
-                  <span className="trust-badge">🏭 Factories</span>
+                  <Link href="/industries/offices" style={{ textDecoration: 'none' }}><span className="trust-badge">🏢 Offices</span></Link>
+                  <Link href="/industries/restaurants" style={{ textDecoration: 'none' }}><span className="trust-badge">🍽️ Restaurants</span></Link>
+                  <Link href="/industries/schools" style={{ textDecoration: 'none' }}><span className="trust-badge">🏫 Schools</span></Link>
+                  <Link href="/industries/hotels" style={{ textDecoration: 'none' }}><span className="trust-badge">🏨 Hotels</span></Link>
+                  <Link href="/industries/factories" style={{ textDecoration: 'none' }}><span className="trust-badge">🏭 Factories</span></Link>
                 </div>
               </div>
 
@@ -288,7 +288,7 @@ export default function ClientPage({ initialProducts }) {
                 </div>
               </Link>
 
-              <Link href="/products?category=disinfectants">
+              <Link href="/disinfectants-ghana">
                 <div className="category-card" style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)' }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🛡️</div>
                   <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Disinfectants</h3>
@@ -652,6 +652,11 @@ export default function ClientPage({ initialProducts }) {
             <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: 0, margin: 0 }}>
               <li><Link href="/" style={footerLinkStyle}>🏠 Home</Link></li>
               <li><Link href="/products" style={footerLinkStyle}>🛒 Products Catalog</Link></li>
+              <li><Link href="/disinfectants-ghana" style={footerLinkStyle}>🛡️ Disinfectants</Link></li>
+              <li><Link href="/industrial-cleaning-products-ghana" style={footerLinkStyle}>🧪 Industrial Cleaners</Link></li>
+              <li><Link href="/hotel-cleaning-supplies-ghana" style={footerLinkStyle}>🏨 Hotel Supplies</Link></li>
+              <li><Link href="/school-hygiene-products-ghana" style={footerLinkStyle}>🏫 School Hygiene</Link></li>
+              <li><Link href="/cleaning-chemicals-ghana" style={footerLinkStyle}>⚗️ Cleaning Chemicals</Link></li>
               <li><Link href="/industries" style={footerLinkStyle}>🏭 Industries Served</Link></li>
               <li><Link href="/bulk-orders" style={footerLinkStyle}>📋 Bulk Quotes</Link></li>
               <li><Link href="/about" style={footerLinkStyle}>🔬 About Our Plant</Link></li>

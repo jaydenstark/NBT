@@ -110,7 +110,7 @@ export const products = [
     id: 101,
     name: "Neat Industrial Degreaser",
     brand: "Neat Product",
-    category: "Cleaning",
+    category: "Bulk 5L & 25L",
     type: "industrial",
     description: "Heavy-duty degreaser for industrial machinery, warehouses, and factories.",
     sizes: [
@@ -125,7 +125,7 @@ export const products = [
     id: 102,
     name: "Deva Industrial Sanitizer",
     brand: "Deva Products",
-    category: "Hygiene",
+    category: "Bulk 5L & 25L",
     type: "industrial",
     description: "Bulk alcohol-based sanitizer for corporate offices, hospitals, and schools.",
     sizes: [
@@ -140,7 +140,7 @@ export const products = [
     id: 103,
     name: "Neat Bulk Floor Wash",
     brand: "Neat Product",
-    category: "Cleaning",
+    category: "Bulk 5L & 25L",
     type: "industrial",
     description: "Concentrated floor cleaning solution for large scale industrial cleaning.",
     sizes: [
@@ -154,7 +154,7 @@ export const products = [
     id: 104,
     name: "Deva Food-Grade Citric Solution",
     brand: "Deva Products",
-    category: "Food Grade Chemical",
+    category: "Bulk 5L & 25L",
     type: "industrial",
     description: "Pure citric acid solution for food processing and preservation.",
     sizes: [
@@ -167,4 +167,4 @@ export const products = [
 ];
 
 export const brands = ["Neat Product", "Deva Products"];
-export const categories = ["Hygiene", "Cleaning", "Food Grade Chemical"];
+export const categories = ["Hygiene", "Cleaning", "Food Grade Chemical", "Bulk 5L & 25L"];

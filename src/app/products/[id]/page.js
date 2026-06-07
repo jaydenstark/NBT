@@ -28,11 +28,13 @@ async function getAllProducts() {
     const products = [];
     for (const row of results.data) {
       if (!row.Name) continue;
+      const isNeatProduct = row.Name.toLowerCase().startsWith('neat');
       products.push({
         id: `sheet_${row.Name}_${row.Size}`,
         slug: row.Name.replace(/\s+/g, '-').toLowerCase(),
         name: row.Name,
         brand: row.Brand || 'Neat Product',
+        supplier: isNeatProduct ? 'Daisy Hotel Amenities' : null,
         type: row.Type?.toLowerCase() === 'industrial' ? 'industrial' : 'retail',
         category: row.Category || 'General',
         description: row.Description || '',

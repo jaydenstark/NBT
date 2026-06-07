@@ -264,9 +264,27 @@ export default function ProductDetailClientPage({ product: rawProduct, related: 
 
                 {/* Brand + Name */}
                 <div>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--secondary)', textTransform: 'uppercase', letterSpacing: '2px' }}>
-                    {product.brand}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '8px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--secondary)', textTransform: 'uppercase', letterSpacing: '2px' }}>
+                      {product.brand}
+                    </span>
+                    {product.supplier && (
+                      <span style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        background: 'linear-gradient(135deg, #FFA500 0%, #FF8C00 100%)',
+                        color: 'white',
+                        padding: '4px 10px',
+                        borderRadius: '14px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        whiteSpace: 'nowrap',
+                        boxShadow: '0 2px 8px rgba(255, 140, 0, 0.25)'
+                      }}>
+                        🏨 {product.supplier}
+                      </span>
+                    )}
+                  </div>
                   <h1 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.25rem)', color: 'var(--primary)', fontFamily: 'Outfit, sans-serif', fontWeight: 800, lineHeight: 1.2, marginTop: '8px' }}>
                     {product.name}
                   </h1>

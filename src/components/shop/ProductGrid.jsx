@@ -6,16 +6,19 @@ const ProductGrid = ({ onAddToCart, products = [] }) => {
   const [catalogType, setCatalogType] = useState('retail');
   const [filterCategory, setFilterCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterSupplier, setFilterSupplier] = useState('All');
 
   // Extract unique categories dynamically from products
   const categories = ['All', ...new Set(products.filter(p => p.type === catalogType && p.category).map(p => p.category))];
+  const suppliers = ['All', ...new Set(products.filter(p => p.supplier).map(p => p.supplier))];
 
   const filteredProducts = products.filter(p => {
     const matchesType = p.type === catalogType;
     const matchesCategory = filterCategory === 'All' || p.category === filterCategory;
+    const matchesSupplier = filterSupplier === 'All' || p.supplier === filterSupplier;
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesType && matchesCategory && matchesSearch;
+    return matchesType && matchesCategory && matchesSupplier && matchesSearch;
   });
 
   return (
@@ -125,6 +128,31 @@ const ProductGrid = ({ onAddToCart, products = [] }) => {
               </button>
             ))}
           </div>
+
+          {suppliers.length > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flexWrap: 'wrap', justifyContent: 'center', paddingTop: '1.5rem', borderTop: '1px solid #e2e8f0' }}>
+              <span style={{ fontWeight: 700, fontSize: '0.75rem', opacity: 0.5, letterSpacing: '1px' }}>SUPPLIER</span>
+              {suppliers.map(s => (
+                <button 
+                  key={s} 
+                  onClick={() => setFilterSupplier(s)}
+                  style={{ 
+                    padding: '8px 20px', 
+                    fontSize: '0.85rem', 
+                    borderRadius: '30px',
+                    fontWeight: 600,
+                    transition: 'all 0.2s',
+                    background: filterSupplier === s ? 'linear-gradient(135deg, #FFA500 0%, #FF8C00 100%)' : '#f8fafc',
+                    color: filterSupplier === s ? 'white' : 'var(--text-main)',
+                    border: filterSupplier === s ? 'none' : '1px solid #e2e8f0',
+                    boxShadow: filterSupplier === s ? '0 4px 12px rgba(255, 140, 0, 0.25)' : 'none'
+                  }}
+                >
+                  {s === 'All' ? '🏢 All' : `🏨 ${s}`}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {filteredProducts.length === 0 ? (
@@ -134,7 +162,7 @@ const ProductGrid = ({ onAddToCart, products = [] }) => {
             <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>We couldn't find anything matching "{searchTerm}" in the {catalogType} catalog.</p>
             <button 
               className="btn btn-outline"
-              onClick={() => { setSearchTerm(''); setFilterCategory('All'); }}
+              onClick={() => { setSearchTerm(''); setFilterCategory('All'); setFilterSupplier('All'); }}
               style={{ padding: '10px 30px', borderRadius: '10px' }}
             >
               Clear Filters

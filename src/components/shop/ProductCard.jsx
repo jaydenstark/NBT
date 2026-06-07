@@ -1,263 +1,250 @@
 'use client';
 import { useState } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const ProductCard = ({ product, onAddToCart, onViewDetails }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const startingSize = product.sizes[0];
-  const rating = product.rating || 5.0;
-
-  const renderStars = (score) => {
-    const rounded = Math.round(score);
-    return (
-      <div style={{ color: '#F59E0B', display: 'flex', gap: '3px', alignItems: 'center' }}>
-        {'★'.repeat(rounded)}
-        {'☆'.repeat(5 - rounded)}
-        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '4px', fontWeight: 600 }}>
-          ({score.toFixed(1)})
-        </span>
-      </div>
-    );
-  };
+  const [selectedSizeIndex] = useState(0); // Keeping state for future use if needed
+  const [quantity, setQuantity] = useState(1);
+  const router = useRouter();
+  
+  let currentSize = product.sizes[selectedSizeIndex] || product.sizes[0];
+  
+  // Extract size from product name if possible (e.g., 4LT, 500ml) since the size selector is disabled
+  const sizeMatch = product.name.match(/(\d+(?:\.\d+)?\s*(?:ml|l|lt|g|kg|liter|liters))/i);
+  if (sizeMatch && currentSize) {
+    currentSize = { ...currentSize, size: sizeMatch[0].toUpperCase() };
+  }
 
   const slug = product.slug || product.name?.replace(/\s+/g, '-').toLowerCase();
 
+  const handleQuantityChange = (delta) => {
+    setQuantity(prev => {
+      const next = prev + delta;
+      if (next < 1) return 1;
+      return next;
+    });
+  };
+
   return (
     <>
-      <style>{`
-        @keyframes pulse-green {
-          0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
-          70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-        }
-        @keyframes pulse-amber {
-          0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6); }
-          70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
-        }
-        @keyframes pulse-blue {
-          0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); }
-          70% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
-        }
-        .dot-green {
-          animation: pulse-green 2s infinite;
-        }
-        .dot-amber {
-          animation: pulse-amber 2s infinite;
-        }
-        .dot-blue {
-          animation: pulse-blue 2s infinite;
-        }
-        .card-btn-primary {
-          background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%) !important;
-          color: white !important;
-          border: none;
-          border-radius: 12px;
-          font-weight: 700;
-          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 4px;
-          font-size: 0.82rem;
-          padding: 11px 4px;
-          box-shadow: 0 4px 10px rgba(43, 140, 138, 0.15);
-        }
-        .card-btn-primary:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 20px rgba(43, 140, 138, 0.3);
-          filter: brightness(1.05);
-        }
-        .card-btn-outline {
-          background: #f8fafc;
-          border: 1px solid #cbd5e1;
-          color: var(--primary) !important;
-          border-radius: 12px;
-          font-weight: 700;
-          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 4px;
-          font-size: 0.82rem;
-          padding: 11px 4px;
-          text-decoration: none;
-        }
-        .card-btn-outline:hover {
-          background: #f1f5f9;
-          border-color: var(--primary);
-          transform: translateY(-2px);
-          box-shadow: 0 4px 10px rgba(11, 35, 57, 0.05);
-        }
-      `}</style>
-
       <div 
         className="product-card"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        onClick={() => onViewDetails ? onViewDetails(product) : null}
         style={{
-          transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease',
-          transform: isHovered ? 'translateY(-8px)' : 'translateY(0)',
-          boxShadow: isHovered ? '0 20px 40px rgba(11, 35, 57, 0.1), 0 0 0 1px rgba(43, 140, 138, 0.15)' : 'var(--shadow-sm)',
-          background: 'var(--white)',
-          borderRadius: '20px',
+          transition: 'all 0.2s ease-in-out',
+          boxShadow: isHovered ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
+          background: 'white',
+          borderRadius: '4px',
           overflow: 'hidden',
-          border: isHovered ? '1px solid rgba(43, 140, 138, 0.4)' : '1px solid rgba(226, 232, 240, 0.7)',
+          border: isHovered ? '1px solid #9ca3af' : '1px solid #e5e7eb',
           display: 'flex',
           flexDirection: 'column',
           height: '100%',
-          position: 'relative',
-          cursor: 'pointer'
+          position: 'relative'
         }}
       >
-        {/* Dynamic Availability Badge */}
+        {/* Dynamic Availability Badge (Retail Tag) */}
         <div style={{
           position: 'absolute',
-          top: '12px',
-          right: '12px',
+          top: '10px',
+          left: '10px',
           background: product.availability === 'In Stock' 
-            ? 'rgba(34, 197, 94, 0.1)' 
+            ? '#ef4444' 
             : product.availability === 'Direct Manufacture'
-              ? 'rgba(245, 158, 11, 0.1)'
-              : 'rgba(59, 130, 246, 0.1)',
-          color: product.availability === 'In Stock' 
-            ? '#16a34a' 
-            : product.availability === 'Direct Manufacture'
-              ? '#d97706'
-              : '#2563eb',
-          padding: '4px 10px',
-          borderRadius: '30px',
-          fontSize: '0.7rem',
+              ? '#f59e0b'
+              : '#3b82f6',
+          color: 'white',
+          padding: '4px 8px',
+          borderRadius: '2px',
+          fontSize: '0.65rem',
           fontWeight: 700,
           zIndex: 5,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '5px',
-          border: `1px solid ${
-            product.availability === 'In Stock' 
-              ? 'rgba(34, 197, 94, 0.2)' 
-              : product.availability === 'Direct Manufacture'
-                ? 'rgba(245, 158, 11, 0.2)'
-                : 'rgba(59, 130, 246, 0.2)'
-          }`
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px'
         }}>
-          <span className={
-            product.availability === 'In Stock' 
-              ? 'dot-green' 
-              : product.availability === 'Direct Manufacture'
-                ? 'dot-amber'
-                : 'dot-blue'
-          } style={{ 
-            width: '6px', 
-            height: '6px', 
-            borderRadius: '50%', 
-            background: product.availability === 'In Stock' 
-              ? '#22c55e' 
-              : product.availability === 'Direct Manufacture'
-                ? '#f59e0b'
-                : '#3b82f6'
-          }} />
           {product.availability}
         </div>
 
         {/* Product Image Section */}
-        <div className="product-image" style={{ 
-          position: 'relative', 
-          overflow: 'hidden',
-          backgroundColor: '#f8fafc',
-          padding: '1.5rem',
-          height: '220px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderBottom: '1px solid rgba(226, 232, 240, 0.5)'
-        }}>
+        <div 
+          className="product-image" 
+          onClick={() => {
+            if (onViewDetails) onViewDetails(product);
+            else router.push(`/products/${slug}`);
+          }}
+          style={{ 
+            position: 'relative', 
+            backgroundColor: 'white',
+            padding: '0.75rem',
+            height: '170px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderBottom: '1px solid #f3f4f6',
+            cursor: 'pointer'
+          }}
+        >
           <img 
             src={product.image} 
             alt={product.name} 
             style={{ 
-              transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-              transform: isHovered ? 'scale(1.08)' : 'scale(1)',
+              transition: 'transform 0.3s ease',
+              transform: isHovered ? 'scale(1.05)' : 'scale(1)',
               width: '100%',
               height: '100%',
               objectFit: 'contain'
             }} 
           />
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(to top, rgba(11, 35, 57, 0.02), transparent)',
-            pointerEvents: 'none'
-          }}></div>
         </div>
 
         {/* Product Info Section */}
-        <div className="product-info" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-          <span className="product-brand" style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--secondary)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '0.5rem' }}>
-            {product.brand}
-          </span>
-          <h3 className="product-name" style={{ fontSize: '1.15rem', marginBottom: '0.5rem', color: 'var(--primary)', fontWeight: 700, lineHeight: 1.35, minHeight: '2.7rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {product.name}
-          </h3>
-          
-          <p className="product-desc" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem', flexGrow: 1, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {product.description || 'Precision-formulated chemical compound engineered for ultimate purity, strength, and reliable cleaning performance.'}
-          </p>
-
-          {/* Pricing and Stars Row */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            marginBottom: '1.25rem',
-            paddingBottom: '1rem',
-            borderBottom: '1px solid rgba(0,0,0,0.04)'
-          }}>
-            <div>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Price</span>
-              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
-                GH₵ {startingSize?.price?.toLocaleString('en-US')}
-              </div>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                ({startingSize?.size})
-              </span>
-            </div>
-            <div>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', textAlign: 'right', marginBottom: '4px' }}>Rating</span>
-              {renderStars(rating)}
-            </div>
+        <div className="product-info" style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0' }}>
+            <span className="product-brand" style={{ fontSize: '0.7rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>
+              {product.brand}
+            </span>
           </div>
-
-          {/* Side-by-Side Action CTAs */}
-          <div 
-            className="product-actions" 
-            onClick={(e) => e.stopPropagation()} // Prevent card viewDetails trigger
+          
+          {/* Clickable Title */}
+          <h3 
+            className="product-name" 
+            onClick={() => {
+              if (onViewDetails) onViewDetails(product);
+              else router.push(`/products/${slug}`);
+            }}
             style={{ 
-              display: 'grid', 
-              gridTemplateColumns: '1fr 1fr', 
-              gap: '8px', 
-              width: '100%' 
+              fontSize: '1rem', 
+              marginBottom: '0.4rem', 
+              color: '#111827', 
+              fontWeight: 700, 
+              lineHeight: 1.25, 
+              minHeight: '2.5rem', 
+              display: '-webkit-box', 
+              WebkitLineClamp: 2, 
+              WebkitBoxOrient: 'vertical', 
+              overflow: 'hidden',
+              cursor: 'pointer'
             }}
           >
-            <button 
-              className="card-btn-primary" 
-              onClick={() => onAddToCart(product, startingSize)}
-            >
-              📥 Add to Cart
-            </button>
-            
-            <Link
-              href={`/products/${slug}`}
-              className="card-btn-outline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              👁️ View Details
-            </Link>
+            {product.name}
+          </h3>
+
+          {/* Pricing Row */}
+          <div style={{ marginTop: '0.2rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ef4444', letterSpacing: '-0.5px' }}>
+              GH₵ {currentSize?.price?.toLocaleString('en-US')}
+            </div>
+            {currentSize?.price < (currentSize?.price * 1.2) && (
+              <div style={{ fontSize: '0.85rem', color: '#9ca3af', textDecoration: 'line-through' }}>
+                GH₵ {(currentSize?.price * 1.2).toLocaleString('en-US', {maximumFractionDigits:0})}
+              </div>
+            )}
           </div>
+
+          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            
+            {/* Size Selector 
+            {product.sizes && product.sizes.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '0.7rem', fontWeight: 700, color: '#4b5563', textTransform: 'uppercase' }}>Select Size</label>
+                <select 
+                  value={selectedSizeIndex}
+                  onChange={(e) => setSelectedSizeIndex(Number(e.target.value))}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: '4px',
+                    border: '1px solid #d1d5db',
+                    fontSize: '0.85rem',
+                    color: '#111827',
+                    fontWeight: 600,
+                    outline: 'none',
+                    cursor: 'pointer',
+                    background: '#f9fafb'
+                  }}
+                >
+                  {product.sizes.map((sz, idx) => (
+                    <option key={idx} value={idx}>
+                      {sz.size} {sz.qtyInBox > 1 ? `(${sz.qtyInBox} pcs/box)` : ''} - GH₵ {sz.price}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            */}
+
+            {/* Quantity Selector */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <label style={{ fontSize: '0.7rem', fontWeight: 700, color: '#4b5563', textTransform: 'uppercase' }}>Quantity</label>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                border: '1px solid #d1d5db', 
+                borderRadius: '4px',
+                overflow: 'hidden',
+                background: 'white'
+              }}>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); handleQuantityChange(-1); }}
+                  style={{ width: '36px', height: '36px', background: '#f3f4f6', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#4b5563', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  -
+                </button>
+                <input 
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (val > 0) setQuantity(val);
+                  }}
+                  onClick={e => e.stopPropagation()}
+                  style={{ width: '40px', height: '36px', border: 'none', textAlign: 'center', fontSize: '0.9rem', fontWeight: 700, outline: 'none', MozAppearance: 'textfield' }}
+                />
+                <button 
+                  onClick={(e) => { e.stopPropagation(); handleQuantityChange(1); }}
+                  style={{ width: '36px', height: '36px', background: '#f3f4f6', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#4b5563', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Prominent Add to Cart Button */}
+        <div style={{ padding: '0 0.75rem 0.75rem' }}>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onAddToCart(product, currentSize, quantity);
+              // Reset quantity after adding
+              setQuantity(1);
+            }}
+            style={{
+              width: '100%',
+              background: isHovered ? '#15803d' : '#16a34a', // Bright Green to drive sales
+              color: 'white',
+              border: 'none',
+              padding: '8px 0',
+              borderRadius: '4px',
+              fontWeight: 800,
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              transition: 'background 0.2s ease',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
+            }}
+          >
+            🛒 Add to Cart
+          </button>
         </div>
       </div>
     </>

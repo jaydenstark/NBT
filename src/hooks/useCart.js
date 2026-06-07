@@ -21,22 +21,34 @@ export function useCart() {
     }
   }, []);
 
-  const addToCart = (product, selectedSize) => {
-    const newItem = {
-      id: `${product.id}_${selectedSize.size}_${Date.now()}`,
-      productId: product.id,
-      name: product.name,
-      size: selectedSize.size,
-      price: selectedSize.price,
-      brand: product.brand,
-      image: product.image
-    };
-    const updated = [...cartItems, newItem];
+  const addToCart = (product, selectedSize, quantity = 1) => {
+    const existingIndex = cartItems.findIndex(
+      item => item.productId === product.id && item.size === selectedSize.size
+    );
+
+    let updated;
+    if (existingIndex >= 0) {
+      updated = [...cartItems];
+      updated[existingIndex].quantity += quantity;
+    } else {
+      const newItem = {
+        id: `${product.id}_${selectedSize.size}_${Date.now()}`,
+        productId: product.id,
+        name: product.name,
+        size: selectedSize.size,
+        price: selectedSize.price,
+        brand: product.brand,
+        image: product.image,
+        quantity: quantity
+      };
+      updated = [...cartItems, newItem];
+    }
+
     setCartItems(updated);
     localStorage.setItem('nbt_cart', JSON.stringify(updated));
     
     // Set toast message to trigger visual non-intrusive alert
-    setToastMessage(`${product.name} (${selectedSize.size})`);
+    setToastMessage(`${quantity}x ${product.name} (${selectedSize.size})`);
   };
 
   const removeFromCart = (index) => {

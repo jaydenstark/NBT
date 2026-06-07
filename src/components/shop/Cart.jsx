@@ -12,7 +12,7 @@ const Cart = ({ isOpen, onClose, cartItems, onRemove, onClearCart }) => {
     address: ''
   });
 
-  const total = cartItems.reduce((acc, item) => acc + item.price, 0);
+  const total = cartItems.reduce((acc, item) => acc + (item.price * (item.quantity || 1)), 0);
 
   if (!isOpen) return null;
 
@@ -44,7 +44,10 @@ const Cart = ({ isOpen, onClose, cartItems, onRemove, onClearCart }) => {
       
       cartItems.forEach((item, index) => {
         const qtyText = item.qtyInBox > 1 ? ` (${item.qtyInBox} pieces/box)` : '';
-        message += `${index + 1}. ${item.name} (${item.size})${qtyText} - GH₵ ${item.price.toLocaleString('en-US')}\n`;
+        const lineTotal = item.price * (item.quantity || 1);
+        // Only append size if it doesn't seem to be in the product name already
+        const sizeString = (item.size && !item.name.toLowerCase().includes(item.size.toLowerCase())) ? ` (${item.size})` : '';
+        message += `${index + 1}. ${item.quantity || 1}x ${item.name}${sizeString}${qtyText} - GH₵ ${lineTotal.toLocaleString('en-US')}\n`;
       });
       
       message += `\n*Total Amount:* GH₵ ${total.toLocaleString('en-US')}`;
@@ -90,11 +93,14 @@ const Cart = ({ isOpen, onClose, cartItems, onRemove, onClearCart }) => {
               cartItems.map((item, index) => (
                 <div key={index} style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <h4 style={{ margin: 0 }}>{item.name}</h4>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--secondary)', fontWeight: 600 }}>
-                      Size: {item.size} {item.qtyInBox > 1 && `(${item.qtyInBox} pcs/box)`}
-                    </p>
-                    <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>GH₵ {item.price.toLocaleString('en-US')}</p>
+                    <h4 style={{ margin: 0 }}>{item.quantity || 1}x {item.name}</h4>
+                    {(item.qtyInBox > 1 || (item.size && !item.name.toLowerCase().includes(item.size.toLowerCase()))) && (
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--secondary)', fontWeight: 600 }}>
+                        {item.size && !item.name.toLowerCase().includes(item.size.toLowerCase()) ? `Size: ${item.size} ` : ''}
+                        {item.qtyInBox > 1 && `(${item.qtyInBox} pcs/box)`}
+                      </p>
+                    )}
+                    <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>GH₵ {(item.price * (item.quantity || 1)).toLocaleString('en-US')}</p>
                   </div>
                   <button 
                     onClick={() => onRemove(index)}

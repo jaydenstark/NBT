@@ -19,7 +19,7 @@ export const metadata = {
         alt: 'Neat Brand Trade Logo',
       },
     ],
-    locale: 'en_US',
+    locale: 'en_GH',
     type: 'website',
   },
   twitter: {

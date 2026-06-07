@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useProducts } from '../../hooks/useProducts';
 
@@ -13,6 +13,28 @@ const Navbar = ({ cartCount, onCartClick }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const { products } = useProducts();
+
+  // Click-outside listener to keep popups on screen until clicked outside
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      // 1. Products Navigation Dropdown
+      const isInsideDropdown = e.target.closest('.nav-dropdown-trigger') || e.target.closest('.nav-dropdown-menu');
+      if (!isInsideDropdown) {
+        setIsDropdownOpen(false);
+      }
+
+      // 2. Search Suggestions Dropdown (Desktop & Mobile)
+      const isInsideSearch = e.target.closest('.search-form-container');
+      if (!isInsideSearch) {
+        setShowSuggestions(false);
+      }
+    };
+
+    window.addEventListener('click', handleOutsideClick);
+    return () => {
+      window.removeEventListener('click', handleOutsideClick);
+    };
+  }, []);
 
   const suggestions = searchQuery.trim().length > 0
     ? products.filter(p => p.name?.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5)
@@ -104,36 +126,45 @@ const Navbar = ({ cartCount, onCartClick }) => {
             <div 
               style={{ position: 'relative', cursor: 'pointer' }}
               onMouseEnter={() => setIsDropdownOpen(true)}
-              onMouseLeave={() => setIsDropdownOpen(false)}
             >
-              <span style={getLinkStyle('/products')} className="nav-dropdown-trigger">
+              <span 
+                style={getLinkStyle('/products')} 
+                className="nav-dropdown-trigger"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsDropdownOpen(!isDropdownOpen);
+                }}
+              >
                 Products <span style={{ fontSize: '0.80rem' }}>▼</span>
               </span>
               
               {isDropdownOpen && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  background: 'white',
-                  minWidth: '240px',
-                  borderRadius: '12px',
-                  boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
-                  padding: '0.75rem 0',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '4px',
-                  border: '1px solid #f1f5f9',
-                  zIndex: 1001,
-                  marginTop: '0.5rem',
-                  animation: 'slideUp 0.2s ease-out'
-                }}>
+                <div 
+                  className="nav-dropdown-menu"
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    background: 'white',
+                    minWidth: '240px',
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
+                    padding: '0.75rem 0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    border: '1px solid #f1f5f9',
+                    zIndex: 1001,
+                    marginTop: '0.5rem',
+                    animation: 'slideUp 0.2s ease-out'
+                  }}
+                >
                   <Link href="/products" style={dropdownItemStyle}>🔍 View All Products</Link>
                   <div style={{ height: '1px', background: '#f1f5f9', margin: '4px 0' }} />
                   <Link href="/products?category=industrial cleaners" style={dropdownItemStyle}>🧪 Industrial Cleaners</Link>
                   <Link href="/products?category=household cleaners" style={dropdownItemStyle}>🏠 Household Cleaners</Link>
                   <Link href="/products?category=hygiene products" style={dropdownItemStyle}>✨ Hygiene Products</Link>
-                  <Link href="/products?category=disinfectants" style={dropdownItemStyle}>🛡️ Disinfectants</Link>
+                  <Link href="/disinfectants-ghana" style={dropdownItemStyle}>🛡️ Disinfectants</Link>
                   <Link href="/products?category=bulk solutions" style={dropdownItemStyle}>📦 Bulk Solutions</Link>
                 </div>
               )}
@@ -151,9 +182,7 @@ const Navbar = ({ cartCount, onCartClick }) => {
             
             <form 
               onSubmit={handleSearchSubmit} 
-              className="mobile-hide" 
-              onMouseLeave={() => setShowSuggestions(false)}
-              onMouseEnter={() => { if (searchQuery.trim()) setShowSuggestions(true); }}
+              className="mobile-hide search-form-container" 
               style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
@@ -333,7 +362,7 @@ const Navbar = ({ cartCount, onCartClick }) => {
             {/* Mobile Search Bar */}
             <form 
               onSubmit={handleSearchSubmit} 
-              onMouseLeave={() => setShowSuggestions(false)}
+              className="search-form-container"
               style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
@@ -427,7 +456,7 @@ const Navbar = ({ cartCount, onCartClick }) => {
             <Link href="/products?category=industrial cleaners" onClick={() => setIsMobileMenuOpen(false)} style={{ ...mobileLinkStyle, paddingLeft: '1rem', fontSize: '0.95rem' }}>🧪 Industrial Cleaners</Link>
             <Link href="/products?category=household cleaners" onClick={() => setIsMobileMenuOpen(false)} style={{ ...mobileLinkStyle, paddingLeft: '1rem', fontSize: '0.95rem' }}>🏠 Household Cleaners</Link>
             <Link href="/products?category=hygiene products" onClick={() => setIsMobileMenuOpen(false)} style={{ ...mobileLinkStyle, paddingLeft: '1rem', fontSize: '0.95rem' }}>✨ Hygiene Products</Link>
-            <Link href="/products?category=disinfectants" onClick={() => setIsMobileMenuOpen(false)} style={{ ...mobileLinkStyle, paddingLeft: '1rem', fontSize: '0.95rem' }}>🛡️ Disinfectants</Link>
+            <Link href="/disinfectants-ghana" onClick={() => setIsMobileMenuOpen(false)} style={{ ...mobileLinkStyle, paddingLeft: '1rem', fontSize: '0.95rem' }}>🛡️ Disinfectants</Link>
             <Link href="/products?category=bulk solutions" onClick={() => setIsMobileMenuOpen(false)} style={{ ...mobileLinkStyle, paddingLeft: '1rem', fontSize: '0.95rem' }}>📦 Bulk Solutions</Link>
             <div style={{ height: '1px', background: '#f1f5f9' }} />
             <Link href="/industries" onClick={() => setIsMobileMenuOpen(false)} style={mobileLinkStyle}>Industries Served</Link>

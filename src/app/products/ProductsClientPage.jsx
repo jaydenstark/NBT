@@ -102,6 +102,21 @@ function ProductsContent({ initialProducts }) {
   });
   const [showSuggestions, setShowSuggestions] = useState(false);
 
+  // Click-outside listener to keep search suggestions on screen until clicked outside
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      const isInsideSearch = e.target.closest('.products-search-container');
+      if (!isInsideSearch) {
+        setShowSuggestions(false);
+      }
+    };
+
+    window.addEventListener('click', handleOutsideClick);
+    return () => {
+      window.removeEventListener('click', handleOutsideClick);
+    };
+  }, []);
+
   const [selectedCategories, setSelectedCategories] = useState(() => {
     const catQuery = searchParams?.get('category');
     if (!catQuery) return [];
@@ -502,94 +517,51 @@ function ProductsContent({ initialProducts }) {
       <Navbar cartCount={cartItems.length} onCartClick={() => setIsCartOpen(true)} />
 
       <main style={{ flexGrow: 1, background: '#f8fafc', paddingBottom: '100px' }}>
-        {/* Marketplace Banner */}
+        {/* Breadcrumb & Retail Header */}
         <section style={{
-          background: '#060e17',
-          color: 'white',
-          padding: '80px 0',
-          textAlign: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.05)'
+          background: 'white',
+          padding: '30px 0 20px',
+          borderBottom: '1px solid #e5e7eb'
         }}>
-          {/* Circular meshes */}
-          <div style={{
-            position: 'absolute',
-            top: '-20%',
-            left: '-10%',
-            width: '600px',
-            height: '600px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(43, 140, 138, 0.15) 0%, transparent 60%)',
-            pointerEvents: 'none',
-            filter: 'blur(40px)'
-          }} />
-          <div style={{
-            position: 'absolute',
-            bottom: '-30%',
-            right: '-10%',
-            width: '500px',
-            height: '500px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(51, 161, 157, 0.1) 0%, transparent 70%)',
-            pointerEvents: 'none',
-            filter: 'blur(30px)'
-          }} />
-          
-          <div className="container">
-            {/* Connected Sync Badge */}
+          <div className="container-fluid">
             <div style={{
-              display: 'inline-flex',
+              fontSize: '0.85rem',
+              color: '#6b7280',
+              marginBottom: '15px',
+              display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              background: 'rgba(43, 140, 138, 0.08)',
-              border: '1px solid rgba(43, 140, 138, 0.2)',
-              padding: '6px 14px',
-              borderRadius: '30px',
-              marginBottom: '18px',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              color: '#33a19d',
-              letterSpacing: '0.5px'
+              gap: '8px'
             }}>
-              <span className="live-pulse-dot" style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: '#22c55e',
-                boxShadow: '0 0 10px #22c55e'
-              }} />
-              REAL-TIME DATABASE SYNCED
+              <a href="/" style={{ color: '#374151', textDecoration: 'none' }}>Home</a>
+              <span>/</span>
+              <span style={{ color: '#374151', textDecoration: 'none' }}>Categories</span>
+              <span>/</span>
+              <span style={{ fontWeight: 600, color: '#111827' }}>All Products</span>
             </div>
 
             <h1 style={{ 
-              fontSize: 'clamp(2.5rem, 5vw, 3.5rem)', 
-              marginTop: '0.2rem', 
+              fontSize: '2rem', 
               fontWeight: 800,
-              background: 'linear-gradient(135deg, #ffffff 30%, #a5f3fc 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              color: '#111827',
+              margin: '0',
               letterSpacing: '-0.5px'
             }}>
-              Premium Chemical Marketplace
+              Home & Kitchen Essentials
             </h1>
-            <p style={{ maxWidth: '650px', margin: '18px auto 0', opacity: 0.8, fontSize: '1.05rem', lineHeight: '1.7', color: '#cbd5e1' }}>
-              Explore our laboratory-certified formulations. Order high-efficiency retail packages or customize massive bulk volumes with complete compliance safety sheets.
-            </p>
           </div>
         </section>
 
         {/* E-Commerce Grid Container */}
-        <section className="container" style={{ marginTop: '40px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '30px', alignItems: 'start' }} className="products-layout-grid">
+        <section className="container-fluid" style={{ marginTop: '40px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '30px', alignItems: 'start' }} className="products-layout-grid">
             
             {/* Desktop Left Sidebar Filters */}
             <aside className="desktop-sidebar" style={{
               background: 'white',
-              padding: '28px',
-              borderRadius: '20px',
-              border: '1px solid var(--border)',
-              boxShadow: 'var(--shadow-sm)',
+              padding: '24px',
+              borderRadius: '8px',
+              border: '1px solid #e5e7eb',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
               position: 'sticky',
               top: '100px',
               maxHeight: 'calc(100vh - 120px)',
@@ -629,10 +601,10 @@ function ProductsContent({ initialProducts }) {
               {/* Top Panel: Search, Sort, Mobile Toggler */}
               <div style={{
                 background: 'white',
-                padding: '16px 24px',
-                borderRadius: '20px',
-                border: '1px solid var(--border)',
-                boxShadow: 'var(--shadow-sm)',
+                padding: '12px 20px',
+                borderRadius: '8px',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -641,9 +613,8 @@ function ProductsContent({ initialProducts }) {
               }}>
                 {/* Search Bar */}
                 <div 
+                  className="products-search-container"
                   style={{ position: 'relative', flexGrow: 1, maxWidth: '400px', minWidth: '260px' }}
-                  onMouseLeave={() => setShowSuggestions(false)}
-                  onMouseEnter={() => { if (searchTerm.trim()) setShowSuggestions(true); }}
                 >
                   <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
                   <input
@@ -658,11 +629,23 @@ function ProductsContent({ initialProducts }) {
                     style={{
                       width: '100%',
                       padding: '12px 16px 12px 42px',
-                      borderRadius: '12px',
-                      border: '1px solid var(--border)',
-                      fontSize: '0.92rem',
+                      borderRadius: '8px',
+                      border: '1px solid #d1d5db',
+                      background: 'white',
+                      fontSize: '0.9rem',
+                      fontWeight: 500,
                       outline: 'none',
-                      transition: 'border-color 0.25s, box-shadow 0.25s'
+                      transition: 'border-color 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (document.activeElement !== e.target) {
+                        e.target.style.borderColor = '#9ca3af';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (document.activeElement !== e.target) {
+                        e.target.style.borderColor = '#d1d5db';
+                      }
                     }}
                     className="search-input-field"
                   />
@@ -861,7 +844,7 @@ function ProductsContent({ initialProducts }) {
                   </button>
                 </div>
               ) : (
-                <div className="product-grid" style={{ gap: '26px' }}>
+                <div className="product-grid" style={{ gap: '20px' }}>
                   {sortedProducts.map((p) => (
                     <ProductCard 
                       key={p.id} 
