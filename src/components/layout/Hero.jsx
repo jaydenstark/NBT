@@ -34,11 +34,15 @@ const Hero = () => {
         {/* Fallback to premium styled background gradient if video fails */}
       </video>
 
+      {/* Ambient glow blob */}
+      <div className="hero-glow" style={{ top: '10%', right: '15%' }}></div>
+      <div className="hero-glow" style={{ bottom: '15%', left: '10%', background: 'radial-gradient(circle, rgba(51, 161, 157, 0.25) 0%, rgba(11, 35, 57, 0) 75%)' }}></div>
+
       {/* Modern High-End Overlay Filters */}
       <div style={{
         position: 'absolute',
         inset: 0,
-        background: 'linear-gradient(135deg, rgba(11, 35, 57, 0.95) 0%, rgba(15, 45, 75, 0.8) 50%, rgba(43, 140, 138, 0.4) 100%)',
+        background: 'linear-gradient(135deg, rgba(11, 35, 57, 0.93) 0%, rgba(15, 45, 75, 0.82) 50%, rgba(43, 140, 138, 0.35) 100%)',
         zIndex: 2
       }}></div>
 
@@ -107,11 +111,10 @@ const Hero = () => {
 
           <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
             <Link href="/account" style={{ textDecoration: 'none' }}>
-              <button className="btn btn-primary" style={{ 
+              <button className="btn btn-primary hero-btn-primary" style={{ 
                 padding: '16px 36px', 
                 fontSize: '1.05rem', 
                 borderRadius: '12px',
-                background: 'var(--secondary)',
                 color: 'white',
                 border: 'none',
                 boxShadow: '0 10px 25px -5px rgba(43, 140, 138, 0.4)',
@@ -122,7 +125,7 @@ const Hero = () => {
               </button>
             </Link>
             <Link href="/account" style={{ textDecoration: 'none' }}>
-              <button className="btn btn-outline" style={{ 
+              <button className="btn btn-outline hero-btn-outline" style={{ 
                 padding: '16px 36px', 
                 fontSize: '1.05rem', 
                 borderRadius: '12px',
@@ -168,6 +171,39 @@ const Hero = () => {
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(40px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes drift {
+          0% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(40px, -30px) scale(1.15); }
+          100% { transform: translate(0, 0) scale(1); }
+        }
+        .hero-glow {
+          position: absolute;
+          width: 450px;
+          height: 450px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(43, 140, 138, 0.22) 0%, rgba(11, 35, 57, 0) 70%);
+          filter: blur(50px);
+          animation: drift 20s infinite alternate ease-in-out;
+          pointer-events: none;
+          z-index: 2;
+        }
+        .hero-btn-primary {
+          background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%) !important;
+          transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+        }
+        .hero-btn-primary:hover {
+          transform: translateY(-3px) scale(1.02);
+          box-shadow: 0 15px 30px rgba(43, 140, 138, 0.45) !important;
+        }
+        .hero-btn-outline {
+          transition: all 0.3s ease !important;
+        }
+        .hero-btn-outline:hover {
+          background: white !important;
+          color: var(--primary) !important;
+          border-color: white !important;
+          transform: translateY(-3px) scale(1.02);
         }
       `}</style>
     </section>

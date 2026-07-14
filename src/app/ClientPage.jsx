@@ -235,7 +235,7 @@ export default function ClientPage({ initialProducts }) {
                           </div>
                           <button 
                             onClick={() => addToCart(product, startingSize)}
-                            className="btn btn-primary" 
+                            className="btn btn-primary product-card-btn" 
                             style={{ 
                               padding: '10px 18px', 
                               fontSize: '0.8rem', 
@@ -431,7 +431,22 @@ export default function ClientPage({ initialProducts }) {
                   alt="Workspace Before Cleaning" 
                   style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'sepia(0.65) brightness(0.6) contrast(0.85) saturate(0.7)' }} 
                 />
-                <div style={{ position: 'absolute', bottom: '25px', left: '25px', background: 'rgba(0,0,0,0.6)', color: 'white', padding: '8px 16px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 700, letterSpacing: '1px' }}>
+                <div style={{ 
+                  position: 'absolute', 
+                  bottom: '25px', 
+                  left: '25px', 
+                  background: 'rgba(15, 23, 42, 0.72)', 
+                  color: 'white', 
+                  padding: '8px 18px', 
+                  borderRadius: '12px', 
+                  fontSize: '0.85rem', 
+                  fontWeight: 700, 
+                  letterSpacing: '1px',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                }}>
                   ❌ DIRTY WORKSPACE
                 </div>
               </div>
@@ -459,7 +474,23 @@ export default function ClientPage({ initialProducts }) {
                     filter: 'brightness(1.15) contrast(1.15) saturate(1.2)' 
                   }} 
                 />
-                <div style={{ position: 'absolute', bottom: '25px', left: '25px', background: 'var(--secondary)', color: 'white', padding: '8px 16px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 700, letterSpacing: '1px', whiteSpace: 'nowrap' }}>
+                <div style={{ 
+                  position: 'absolute', 
+                  bottom: '25px', 
+                  left: '25px', 
+                  background: 'rgba(43, 140, 138, 0.85)', 
+                  color: 'white', 
+                  padding: '8px 18px', 
+                  borderRadius: '12px', 
+                  fontSize: '0.85rem', 
+                  fontWeight: 700, 
+                  letterSpacing: '1px', 
+                  whiteSpace: 'nowrap',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  boxShadow: '0 4px 20px rgba(43, 140, 138, 0.25)'
+                }}>
                   ✨ PRISTINE NBT CLEAN
                 </div>
               </div>
@@ -477,25 +508,27 @@ export default function ClientPage({ initialProducts }) {
                 boxShadow: '0 0 10px rgba(0,0,0,0.5)',
                 transition: 'left 0.05s ease-out'
               }}>
-                <div style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  width: '48px',
-                  height: '48px',
-                  background: 'var(--secondary)',
-                  color: 'white',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-                  fontWeight: 900,
-                  fontSize: '1.2rem',
-                  border: '3px solid white',
-                  userSelect: 'none'
-                }}>
+                <div 
+                  className="slider-handle-pulse"
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '48px',
+                    height: '48px',
+                    background: 'var(--secondary)',
+                    color: 'white',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 900,
+                    fontSize: '1.2rem',
+                    border: '3px solid white',
+                    userSelect: 'none'
+                  }}
+                >
                   ↔
                 </div>
               </div>
@@ -831,12 +864,58 @@ export default function ClientPage({ initialProducts }) {
           text-align: left;
           height: 100%;
           cursor: pointer;
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
-          box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+          transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s;
+          box-shadow: 0 10px 20px rgba(11, 35, 57, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          position: relative;
+          overflow: hidden;
+        }
+        .category-card::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 100%);
+          opacity: 0;
+          transition: opacity 0.4s ease;
+          pointer-events: none;
         }
         .category-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+          transform: translateY(-8px) scale(1.015);
+          box-shadow: 0 25px 40px rgba(11, 35, 57, 0.16), 0 0 25px rgba(43, 140, 138, 0.25);
+          border-color: rgba(255, 255, 255, 0.3);
+        }
+        .category-card:hover::before {
+          opacity: 1;
+        }
+        .product-card {
+          transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s !important;
+        }
+        .product-card:hover {
+          transform: translateY(-8px) !important;
+          box-shadow: 0 22px 35px rgba(11, 35, 57, 0.09) !important;
+          border-color: rgba(43, 140, 138, 0.35) !important;
+        }
+        .product-card img {
+          transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        .product-card:hover img {
+          transform: scale(1.08);
+        }
+        .product-card-btn {
+          transition: all 0.3s ease !important;
+        }
+        .product-card-btn:hover {
+          background: var(--secondary) !important;
+          box-shadow: 0 4px 12px rgba(43, 140, 138, 0.35) !important;
+          transform: scale(1.03);
+        }
+        @keyframes glowPulse {
+          0% { box-shadow: 0 0 0 0 rgba(43, 140, 138, 0.65), 0 4px 15px rgba(0,0,0,0.35); }
+          70% { box-shadow: 0 0 0 14px rgba(43, 140, 138, 0), 0 4px 15px rgba(0,0,0,0.35); }
+          100% { box-shadow: 0 0 0 0 rgba(43, 140, 138, 0), 0 4px 15px rgba(0,0,0,0.35); }
+        }
+        .slider-handle-pulse {
+          animation: glowPulse 2s infinite ease-in-out;
         }
         .benefit-card {
           background: white;
@@ -844,11 +923,11 @@ export default function ClientPage({ initialProducts }) {
           border-radius: 16px;
           border: 1px solid var(--border);
           box-shadow: var(--shadow-sm);
-          transition: transform 0.3s, box-shadow 0.3s;
+          transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
           text-align: left;
         }
         .benefit-card:hover {
-          transform: translateY(-4px);
+          transform: translateY(-6px);
           box-shadow: var(--shadow-md);
         }
         .social-icon {
