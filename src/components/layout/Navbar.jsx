@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useProducts } from '../../hooks/useProducts';
+import { useAuthUser } from '../../hooks/useAuthUser';
 
 const Navbar = ({ cartCount, onCartClick }) => {
   const router = useRouter();
@@ -13,6 +14,7 @@ const Navbar = ({ cartCount, onCartClick }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const { products } = useProducts();
+  const { user } = useAuthUser();
 
   // Click-outside listener to keep popups on screen until clicked outside
   useEffect(() => {
@@ -527,6 +529,48 @@ const Navbar = ({ cartCount, onCartClick }) => {
           }
         `}</style>
       </nav>
+
+      {/* 3. MOBILE BOTTOM NAVIGATION BAR */}
+      <div className="mobile-bottom-nav">
+        <Link href="/" className={`mobile-bottom-nav-item ${pathname === '/' ? 'active' : ''}`}>
+          <span className="mobile-bottom-nav-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </span>
+          <span className="mobile-bottom-nav-label">Home</span>
+        </Link>
+        <Link href="/products" className={`mobile-bottom-nav-item ${pathname?.startsWith('/products') ? 'active' : ''}`}>
+          <span className="mobile-bottom-nav-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+          </span>
+          <span className="mobile-bottom-nav-label">Products</span>
+        </Link>
+        <Link href="/account?tab=orders" className={`mobile-bottom-nav-item`}>
+          <span className="mobile-bottom-nav-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+          </span>
+          <span className="mobile-bottom-nav-label">Orders</span>
+        </Link>
+        <Link href="/account" className={`mobile-bottom-nav-item ${pathname === '/account' ? 'active' : ''}`}>
+          <span className="mobile-bottom-nav-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ overflow: 'visible' }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              {user && (
+                <>
+                  <circle cx="20" cy="20" r="6" fill="#10B981" stroke="#fff" strokeWidth="2" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 20.5l1.5 1.5 2.5-3" stroke="#fff" strokeWidth={2} />
+                </>
+              )}
+            </svg>
+          </span>
+          <span className="mobile-bottom-nav-label">Account</span>
+        </Link>
+      </div>
     </>
   );
 };

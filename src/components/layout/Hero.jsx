@@ -86,12 +86,12 @@ const Hero = () => {
             fontFamily: 'Outfit, sans-serif',
             letterSpacing: '-1px'
           }}>
-            Industrial Cleaning & <br />
+            Buy Cleaning & Hygiene Products Online for <br />
             <span style={{ 
               background: 'linear-gradient(to right, #ffffff, #a5f3fc)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent'
-            }}>Hygiene Solutions</span> You Can Trust
+            }}>Your Business</span>
           </h1>
 
           <p style={{ 
@@ -102,11 +102,11 @@ const Hero = () => {
             fontWeight: '400',
             color: '#e2e8f0'
           }}>
-            Professional cleaning products for homes, offices, schools, restaurants, factories and businesses. Engineered for ultimate active ingredient concentration.
+            Access wholesale pricing, fast ordering, digital invoices, delivery tracking, and exclusive partner benefits.
           </p>
 
           <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
-            <Link href="/products" style={{ textDecoration: 'none' }}>
+            <Link href="/account" style={{ textDecoration: 'none' }}>
               <button className="btn btn-primary" style={{ 
                 padding: '16px 36px', 
                 fontSize: '1.05rem', 
@@ -115,12 +115,13 @@ const Hero = () => {
                 color: 'white',
                 border: 'none',
                 boxShadow: '0 10px 25px -5px rgba(43, 140, 138, 0.4)',
-                fontWeight: 700
+                fontWeight: 700,
+                cursor: 'pointer'
               }}>
-                🛒 Shop Now
+                📋 Register My Business
               </button>
             </Link>
-            <Link href="/bulk-orders" style={{ textDecoration: 'none' }}>
+            <Link href="/account" style={{ textDecoration: 'none' }}>
               <button className="btn btn-outline" style={{ 
                 padding: '16px 36px', 
                 fontSize: '1.05rem', 
@@ -129,15 +130,16 @@ const Hero = () => {
                 color: '#ffffff',
                 border: '2px solid rgba(255, 255, 255, 0.4)',
                 backdropFilter: 'blur(8px)',
-                fontWeight: 700
+                fontWeight: 700,
+                cursor: 'pointer'
               }}>
-                📋 Request Bulk Quote
+                🔑 Login
               </button>
             </Link>
           </div>
 
           {/* Quick Metrics Bar */}
-          <div style={{ 
+          <div className="quick-metrics-bar" style={{ 
             display: 'flex', 
             gap: '2.5rem', 
             marginTop: '4rem', 

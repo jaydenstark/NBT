@@ -9,6 +9,7 @@ import FloatingContact from '../../components/layout/FloatingContact';
 import ProductCard from '../../components/shop/ProductCard';
 import { useProducts } from '../../hooks/useProducts';
 import { useCart } from '../../hooks/useCart';
+import { CompactProcurementView, QuickOrderInterface } from '../../components/shop/ProcurementViews';
 
 // Helper to classify size strings into Small, Medium, Large, and Industrial buckets
 const classifySize = (sizeStr) => {
@@ -137,6 +138,7 @@ function ProductsContent({ initialProducts }) {
   const [selectedAvailabilities, setSelectedAvailabilities] = useState([]);
   const [selectedRatings, setSelectedRatings] = useState([]);
   const [sortBy, setSortBy] = useState('popular');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'procurement'
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   const [selectedProduct, setSelectedProduct] = useState(null); // For Details Modal
@@ -351,6 +353,20 @@ function ProductsContent({ initialProducts }) {
   // 7. Sorting Pipeline
   const sortedProducts = useMemo(() => {
     return [...filteredProducts].sort((a, b) => {
+      // Force products with no images to the absolute bottom, regardless of other sort criteria
+      const isActualImage = (img) => {
+        if (!img || typeof img !== 'string') return false;
+        const trimmed = img.trim();
+        if (trimmed === '') return false;
+        if (trimmed === '/PRODUCTS%20/Neat/neat-all-purpose-floral-2l.png') return false;
+        return true;
+      };
+
+      const aHasImage = isActualImage(a.image);
+      const bHasImage = isActualImage(b.image);
+      if (aHasImage && !bHasImage) return -1;
+      if (!aHasImage && bHasImage) return 1;
+
       if (sortBy === 'newest') {
         return new Date(b.date) - new Date(a.date);
       }
@@ -786,6 +802,50 @@ function ProductsContent({ initialProducts }) {
                       <option value="best-rated">Best Rated</option>
                     </select>
                   </div>
+
+                  {/* B2B View Mode Toggle */}
+                  <div style={{
+                    display: 'flex',
+                    background: '#f1f5f9',
+                    padding: '4px',
+                    borderRadius: '10px',
+                    border: '1px solid var(--border)'
+                  }}>
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: viewMode === 'grid' ? 'white' : 'transparent',
+                        color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-muted)',
+                        fontWeight: 700,
+                        fontSize: '0.82rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        boxShadow: viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.05)' : 'none'
+                      }}
+                    >
+                      🖼️ Grid View
+                    </button>
+                    <button
+                      onClick={() => setViewMode('procurement')}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: viewMode === 'procurement' ? 'white' : 'transparent',
+                        color: viewMode === 'procurement' ? 'var(--primary)' : 'var(--text-muted)',
+                        fontWeight: 700,
+                        fontSize: '0.82rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        boxShadow: viewMode === 'procurement' ? '0 1px 3px rgba(0,0,0,0.05)' : 'none'
+                      }}
+                    >
+                      📋 B2B Procurement
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -848,6 +908,11 @@ function ProductsContent({ initialProducts }) {
                 Showing <strong>{sortedProducts.length}</strong> matching formulations in database
               </div>
 
+              {/* Quick Order Console for Procurement View */}
+              {viewMode === 'procurement' && isLoaded && sortedProducts.length > 0 && (
+                <QuickOrderInterface products={sortedProducts} onAddToCart={addToCart} />
+              )}
+
               {/* Products Catalog Display Grid */}
               {!isLoaded ? (
                 <div style={{ padding: '80px', textAlign: 'center', background: 'white', borderRadius: '24px', border: '1px solid var(--border)' }}>
@@ -869,6 +934,8 @@ function ProductsContent({ initialProducts }) {
                     Reset Search & Filters
                   </button>
                 </div>
+              ) : viewMode === 'procurement' ? (
+                <CompactProcurementView products={sortedProducts} onAddToCart={addToCart} />
               ) : (
                 <div className="product-grid" style={{ gap: '20px' }}>
                   {sortedProducts.map((p) => (

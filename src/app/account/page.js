@@ -1,38 +1,37 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Navbar from '../../components/layout/Navbar';
 import Cart from '../../components/shop/Cart';
 import FloatingContact from '../../components/layout/FloatingContact';
 import { useCart } from '../../hooks/useCart';
 import InvoiceModal from '../../components/shop/InvoiceModal';
-import { collection, addDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { useAuthUser } from '../../hooks/useAuthUser';
+import { auth } from '../../lib/firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { userService } from '../../services/db';
 
 export default function AccountPage() {
   const { cartItems, isCartOpen, setIsCartOpen, addToCart, removeFromCart, clearCart } = useCart();
   const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null);
 
   // Auth States
-  const [activeUser, setActiveUser] = useState(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [authMode, setAuthMode] = useState('register'); // 'register' | 'login'
-  const [authState, setAuthState] = useState('form'); // 'form' | 'recaptcha' | 'verify' | 'success'
+  const { user: activeUser, loading: authLoading } = useAuthUser();
+  const isLoaded = !authLoading;
+  const [authMode, setAuthMode] = useState('login'); // 'register' | 'login'
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [authError, setAuthError] = useState('');
   
-  // Registration Form inputs
-  const [repName, setRepName] = useState('');
-  const [companyName, setCompanyName] = useState('');
+  // Form inputs
+  const [fullName, setFullName] = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [businessType, setBusinessType] = useState('supermarket');
+  const [location, setLocation] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  
-  // OTP Verification State
-  const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
-  const otpInputsRef = useRef([]);
-  const [resendTimer, setResendTimer] = useState(60);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [isRecaptchaChecked, setIsRecaptchaChecked] = useState(false);
-  const [recaptchaLoading, setRecaptchaLoading] = useState(false);
-  const [verificationError, setVerificationError] = useState('');
+  const [password, setPassword] = useState('');
+  const [otpCode, setOtpCode] = useState('');
 
   // 7-Tab B2B Customer Portal Dashboard State Hooks
   const [activeSubTab, setActiveSubTab] = useState('dashboard');
@@ -40,21 +39,26 @@ export default function AccountPage() {
     { id: 'w1', name: 'Neat Stark Premium Floral Sanitizer', size: '25L Drum', price: 1200, spec: 'Benzalkonium Chloride (2.0% w/v) Active Matrix', image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=300' },
     { id: 'w2', name: 'Neat Industrial Floor Degreaser', size: 'IBC 1-Ton', price: 8500, spec: 'Heavy Industrial Alkaline (30% Active Matter)', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=300' }
   ]);
-  const [customAddresses, setCustomAddresses] = useState([
-    { id: 'addr-1', name: 'Accra Central Hub (Primary Depot)', address: 'Plot 12, Industrial Area, Accra', coordinator: 'Emma Mensah', phone: '+233 24 456 7890', isPrimary: true },
-    { id: 'addr-2', name: 'Tema Port Customs Hub', address: 'Berth 3, Tema Harbour, Tema', coordinator: 'Kwame Mensah', phone: '+233 20 876 5432', isPrimary: false }
-  ]);
-  const [newSiteName, setNewSiteName] = useState('');
-  const [newSiteAddr, setNewSiteAddr] = useState('');
-  const [newSiteCoord, setNewSiteCoord] = useState('');
-  const [newSitePhone, setNewSitePhone] = useState('');
-  const [selectedSizes, setSelectedSizes] = useState({
+
+  const [selectedSizes] = useState({
     'sp-1': '25L Drum',
     'sp-2': '25L Drum',
     'sp-3': '25L Drum'
   });
   const [trackedOrderId, setTrackedOrderId] = useState('ORD-9912');
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tab = urlParams.get('tab');
+      if (tab) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setActiveSubTab(tab);
+      }
+    }
+  }, []);
+
+  // eslint-disable-next-line no-unused-vars
   const savedProductsList = [
     {
       id: 'sp-1',
@@ -138,27 +142,9 @@ export default function AccountPage() {
     }
   };
 
-  const handleAddAddress = (e) => {
-    e.preventDefault();
-    if (!newSiteName || !newSiteAddr || !newSiteCoord || !newSitePhone) {
-      alert("Please fill in all coordinator site inputs.");
-      return;
-    }
-    const newAddr = {
-      id: `addr-${Date.now()}`,
-      name: newSiteName,
-      address: newSiteAddr,
-      coordinator: newSiteCoord,
-      phone: `+233 ${newSitePhone}`,
-      isPrimary: false
-    };
-    setCustomAddresses(prev => [...prev, newAddr]);
-    setNewSiteName('');
-    setNewSiteAddr('');
-    setNewSiteCoord('');
-    setNewSitePhone('');
-  };
 
+
+  // eslint-disable-next-line no-unused-vars
   const handleAddSavedProductToCart = (prod) => {
     const size = selectedSizes[prod.id];
     const price = prod.pricing[size];
@@ -178,242 +164,100 @@ export default function AccountPage() {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'orders', label: 'Orders', icon: '📦' },
-    { id: 'wishlist', label: 'Wishlist', icon: '💖' },
-    { id: 'addresses', label: 'Addresses', icon: '📍' },
-    { id: 'saved-products', label: 'Saved Products', icon: '🧪' },
+    { id: 'invoices', label: 'Invoices', icon: '📄' },
+    { id: 'purchase-orders', label: 'Purchase Orders', icon: '📝' },
+    { id: 'saved-products', label: 'Saved Products', icon: '💖' },
     { id: 'track-shipment', label: 'Track Shipment', icon: '🚚' },
     { id: 'profile', label: 'Profile', icon: '👤' },
   ];
 
-  // Fallback defaults for newly created wholesale credit parameters
-  const standardCreditLimit = 50000;
-  const standardCreditUsed = 0;
-  const standardTier = 'Tier 2 Bulk Wholesaler';
+  // Removed hardcoded fallback limits since they are in Firestore now
 
-  // Load session from localStorage on mount safely
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('nbt_active_user');
-      setTimeout(() => {
-        if (stored) {
-          try {
-            setActiveUser(JSON.parse(stored));
-          } catch (e) {
-            console.error("Error parsing stored session", e);
-          }
-        }
-        setIsLoaded(true);
-      }, 0);
-    }
-  }, []);
-
-  // Resend Timer Countdown
-  useEffect(() => {
-    let interval = null;
-    if (authState === 'verify' && resendTimer > 0) {
-      interval = setInterval(() => {
-        setResendTimer(prev => prev - 1);
-      }, 1000);
-    } else if (resendTimer === 0) {
-      clearInterval(interval);
-    }
-    return () => clearInterval(interval);
-  }, [authState, resendTimer]);
+  // Removed redundant isLoaded useEffect
 
   // Handle Form Submission
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
-    setVerificationError('');
+    setAuthError('');
+    setIsSubmitting(true);
 
-    if (authMode === 'register') {
-      if (!repName || !companyName || !email || !phone) {
-        setVerificationError('Please complete all standard fields.');
-        return;
-      }
-    } else {
-      if (!phone) {
-        setVerificationError('Please provide your registered phone number.');
-        return;
-      }
-    }
-
-    // Advance to ReCAPTCHA simulation
-    setAuthState('recaptcha');
-    setRecaptchaLoading(true);
-    setTimeout(() => {
-      setRecaptchaLoading(false);
-    }, 1200);
-  };
-
-  // Confirm ReCAPTCHA Check
-  const handleRecaptchaConfirm = () => {
-    setIsRecaptchaChecked(true);
-    setTimeout(() => {
-      // Transition to OTP Code verification and trigger SMS
-      setAuthState('verify');
-      setResendTimer(60);
-      setOtpCode(['', '', '', '', '', '']);
-    }, 800);
-  };
-
-  // Handle individual OTP digit inputs
-  const handleOtpChange = (index, value) => {
-    if (isNaN(value)) return;
-    
-    const newOtp = [...otpCode];
-    newOtp[index] = value.slice(-1); // Only keep last digit
-    setOtpCode(newOtp);
-
-    // Auto-focus next input field
-    if (value && index < 5) {
-      otpInputsRef.current[index + 1]?.focus();
-    }
-  };
-
-  const handleOtpKeyDown = (index, e) => {
-    // Backspace auto-focus previous field
-    if (e.key === 'Backspace' && !otpCode[index] && index > 0) {
-      otpInputsRef.current[index - 1]?.focus();
-    }
-  };
-
-  // Perform SMS verification check
-  const handleVerifyCode = async () => {
-    const code = otpCode.join('');
-    setVerificationError('');
-    
-    if (code.length < 6) {
-      setVerificationError('Please enter the complete 6-digit code.');
-      return;
-    }
-
-    setIsVerifying(true);
-
-    // Simulate network latency
-    setTimeout(async () => {
-      // High-fidelity standard verification test code: 192837
-      if (code !== '192837') {
-        setVerificationError('Invalid security verification code. Please try again.');
-        setIsVerifying(false);
-        return;
-      }
-
-      try {
-        if (authMode === 'register') {
-          // Format standard values
-          const cleanPhone = phone.trim();
-          const cleanEmail = email.toLowerCase().trim();
-          const cleanCompany = companyName.trim();
-          const cleanRep = repName.trim();
-          const uniqueDiscount = `NBT-${cleanCompany.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5)}-15`;
-
-          // Check if user already exists in Firestore by phone
-          const q = query(collection(db, 'wholesale_clients'), where('phone', '==', cleanPhone));
-          const snap = await getDocs(q);
-          if (!snap.empty) {
-            setVerificationError('An account with this mobile number already exists. Please Log In.');
-            setIsVerifying(false);
-            setAuthMode('login');
-            setAuthState('form');
-            return;
-          }
-
-          // Build premium B2B client details
-          const clientData = {
-            company: cleanCompany,
-            representative: cleanRep,
-            email: cleanEmail,
-            phone: cleanPhone,
-            discountCode: uniqueDiscount,
-            tier: standardTier,
-            creditLimit: standardCreditLimit,
-            creditUsed: standardCreditUsed,
-            orders: [
-              { 
-                id: 'ORD-9842', 
-                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), 
-                total: 4200, 
-                items: '12x All-Purpose Floral (5L), 5x Neat Bleach (25L)', 
-                status: 'Delivered' 
-              }
-            ]
-          };
-
-          // Save client details to Firestore
-          await addDoc(collection(db, 'wholesale_clients'), {
-            ...clientData,
-            createdAt: serverTimestamp()
-          });
-
-          // Set active session
-          localStorage.setItem('nbt_active_user', JSON.stringify(clientData));
-          setActiveUser(clientData);
-
-        } else {
-          // Log In flow: Query Firestore for existing account by phone
-          const cleanPhone = phone.trim();
-          const q = query(collection(db, 'wholesale_clients'), where('phone', '==', cleanPhone));
-          const snap = await getDocs(q);
-
-          if (snap.empty) {
-            // Fallback: If Stark Distributors default, log in with Stark
-            if (cleanPhone.includes('244123456') || cleanPhone.includes('246272115')) {
-              const starkDefault = {
-                company: 'Stark Chemical Distributors',
-                representative: 'Jayden Stark',
-                email: 'jayden@starkchemicals.com',
-                tier: 'Tier 2 Bulk Wholesaler',
-                discountCode: 'NBT-STARK-15',
-                creditLimit: 50000,
-                creditUsed: 12450,
-                orders: [
-                  { id: 'ORD-9842', date: 'May 14, 2026', total: 4200, items: '12x All-Purpose Floral (5L), 5x Neat Bleach (25L)', status: 'Delivered' },
-                  { id: 'ORD-9751', date: 'April 28, 2026', total: 8250, items: '2x Neat Industrial Detergent IBC (1 Ton)', status: 'Delivered' },
-                  { id: 'ORD-9533', date: 'March 11, 2026', total: 11200, items: '40x Floral Disinfectant (25L), 20x Handwash (5L)', status: 'Delivered' }
-                ]
-              };
-              localStorage.setItem('nbt_active_user', JSON.stringify(starkDefault));
-              setActiveUser(starkDefault);
-            } else {
-              setVerificationError('No wholesale account found matching this mobile number. Please register first.');
-              setIsVerifying(false);
-              return;
-            }
-          } else {
-            // Found matched user profile in database
-            const matchedUser = snap.docs[0].data();
-            localStorage.setItem('nbt_active_user', JSON.stringify(matchedUser));
-            setActiveUser(matchedUser);
-          }
+    try {
+      if (authMode === 'register') {
+        if (!fullName || !businessName || !email || !password || !phone || !location) {
+          throw new Error('Please complete all required fields.');
         }
 
-        // Complete Verification
-        setAuthState('success');
-        setIsVerifying(false);
-      } catch (err) {
-        console.error("Authentication/Database Sync failed", err);
-        setVerificationError('Synchronization failed. Please check internet connection.');
-        setIsVerifying(false);
+        // Switch to OTP view instead of creating immediately
+        setAuthMode('otp');
+        setIsSubmitting(false);
+        return;
+
+      } else if (authMode === 'otp') {
+        if (otpCode !== '1234') {
+          throw new Error('Invalid OTP Code. Please use 1234 for testing.');
+        }
+
+        // Create Firebase Auth user
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        
+        // Save structured B2B profile to Firestore
+        await userService.createUserProfile(userCredential.user.uid, {
+          fullName,
+          email,
+          phone,
+          businessName,
+          businessType,
+          location,
+          role: 'buyer', // Default role
+          commissionTier: 'bronze',
+          discountRate: 0,
+          creditLimit: 1000, // standard default
+          creditUsed: 0
+        });
+
+      } else {
+        if (!email || !password) {
+          throw new Error('Please provide both email and password.');
+        }
+        // Log in
+        await signInWithEmailAndPassword(auth, email, password);
       }
-    }, 1500);
+    } catch (err) {
+      console.error("Auth Error:", err);
+      // Format Firebase errors slightly better
+      if (err.code === 'auth/email-already-in-use') {
+        setAuthError('An account with this email already exists. Please log in.');
+      } else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        setAuthError('Invalid email or password.');
+      } else {
+        setAuthError(err.message || 'Authentication failed. Please check your inputs and try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Sign out corporate user
-  const handleSignOut = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('nbt_active_user');
-      setActiveUser(null);
-      setAuthState('form');
-      setAuthMode('register');
-      setRepName('');
-      setCompanyName('');
-      setEmail('');
-      setPhone('');
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      setAuthMode('login');
+    } catch (error) {
+      console.error('Error signing out', error);
     }
   };
 
-  const remainingCredit = activeUser ? activeUser.creditLimit - activeUser.creditUsed : 0;
-  const creditPercent = activeUser ? (activeUser.creditUsed / activeUser.creditLimit) * 100 : 0;
+  const userFullName = activeUser?.fullName || activeUser?.representative || 'User';
+  const userCompany = activeUser?.businessName || activeUser?.company || 'Business';
+  const userTier = activeUser?.commissionTier || activeUser?.tier || 'buyer';
+  const userPhone = activeUser?.phone || '';
+  const userEmail = activeUser?.email || '';
+  const userDiscountCode = activeUser?.discountCode || `NBT-${(userCompany || '').substring(0, 5).toUpperCase()}-${activeUser?.discountRate || 0}`;
+  const userCreditLimit = (activeUser?.creditLimit === 50000) ? 1000 : (activeUser?.creditLimit ?? 1000);
+  const userCreditUsed = activeUser?.creditUsed ?? 0;
+
+  const remainingCredit = activeUser ? userCreditLimit - userCreditUsed : 0;
+  const userOrders = activeUser?.orders || [];
 
   if (!isLoaded) {
     return (
@@ -437,354 +281,278 @@ export default function AccountPage() {
       {/* GATEKEEPER SIGNUP & VERIFICATION SCREEN */}
       {!activeUser ? (
         <main style={{ flexGrow: 1, background: 'linear-gradient(135deg, #0B2339 0%, #0d3152 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 20px' }}>
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
+          <div className="split-screen-container" style={{
+            display: 'flex',
+            width: '100%',
+            maxWidth: '1000px',
+            background: 'rgba(255, 255, 255, 0.03)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid rgba(255, 255, 255, 0.09)',
-            width: '100%',
-            maxWidth: '520px',
             borderRadius: '28px',
-            padding: '40px',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
-            color: 'white',
-            fontFamily: 'Inter, sans-serif'
+            overflow: 'hidden',
+            flexDirection: 'row',
+            flexWrap: 'wrap'
           }}>
-            
-            {/* LOGO AREA */}
-            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-              <img 
-                src="/NBT Logo_.png" 
-                alt="NBT Logo" 
-                style={{ height: '56px', width: 'auto', background: 'rgba(11, 35, 57, 0.65)', padding: '8px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }} 
-              />
-              <h2 style={{ fontFamily: 'Outfit', fontWeight: 850, fontSize: '1.65rem', marginTop: '15px', color: 'white', letterSpacing: '-0.5px', marginBottom: '5px' }}>
-                Neat Brand Trade
-              </h2>
-              <span style={{ fontSize: '0.72rem', color: 'var(--secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2.5px' }}>
-                Wholesale Portal Gateway
-              </span>
+            {/* LEFT: BENEFITS */}
+            <div className="split-screen-left" style={{
+              flex: '1 1 400px',
+              padding: '50px 40px',
+              background: 'linear-gradient(135deg, rgba(43, 140, 138, 0.15) 0%, rgba(11, 35, 57, 0.5) 100%)',
+              borderRight: '1px solid rgba(255, 255, 255, 0.05)',
+              color: 'white',
+              fontFamily: 'Inter, sans-serif'
+            }}>
+              {/* LOGO AREA */}
+              <div style={{ marginBottom: '30px' }}>
+                <img 
+                  src="/NBT Logo_.png" 
+                  alt="NBT Logo" 
+                  style={{ height: '56px', width: 'auto', background: 'rgba(11, 35, 57, 0.65)', padding: '8px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }} 
+                />
+                <h2 style={{ fontFamily: 'Outfit', fontWeight: 850, fontSize: '1.65rem', marginTop: '15px', color: 'white', letterSpacing: '-0.5px', marginBottom: '5px' }}>
+                  Neat Brand Trade
+                </h2>
+                <span style={{ fontSize: '0.72rem', color: 'var(--secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2.5px' }}>
+                  Wholesale Portal Gateway
+                </span>
+              </div>
+
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '20px', color: 'var(--secondary)' }}>Why Join NBT?</h3>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 30px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1rem' }}>
+                  <span style={{ color: 'var(--secondary)', fontSize: '1.2rem' }}>✓</span> Wholesale Prices
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1rem' }}>
+                  <span style={{ color: 'var(--secondary)', fontSize: '1.2rem' }}>✓</span> Fast Online Ordering
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1rem' }}>
+                  <span style={{ color: 'var(--secondary)', fontSize: '1.2rem' }}>✓</span> Digital Invoices
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1rem' }}>
+                  <span style={{ color: 'var(--secondary)', fontSize: '1.2rem' }}>✓</span> Delivery Tracking
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1rem' }}>
+                  <span style={{ color: 'var(--secondary)', fontSize: '1.2rem' }}>✓</span> Bulk Purchase Discounts
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1rem' }}>
+                  <span style={{ color: 'var(--secondary)', fontSize: '1.2rem' }}>✓</span> Priority Customer Support
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1rem' }}>
+                  <span style={{ color: 'var(--secondary)', fontSize: '1.2rem' }}>✓</span> Business Purchase History
+                </li>
+              </ul>
+              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.95rem', lineHeight: 1.6 }}>
+                  Businesses that order regularly qualify for better pricing and special promotions.
+                </p>
+              </div>
             </div>
 
-            {/* PHASE 1: ACCOUNT DETAILS FORM */}
-            {authState === 'form' && (
+            {/* RIGHT: FORM */}
+            <div className="split-screen-right" style={{
+              flex: '1 1 450px',
+              padding: '50px 40px',
+              color: 'white',
+              fontFamily: 'Inter, sans-serif',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center'
+            }}>
+              {/* AUTHENTICATION FORM */}
               <div>
-                {/* Form Mode Selector tabs */}
-                <div style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '12px', marginBottom: '25px' }}>
-                  <button 
-                    onClick={() => { setAuthMode('register'); setVerificationError(''); }}
-                    style={{
-                      flex: 1,
-                      background: authMode === 'register' ? '#2B8C8A' : 'transparent',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontWeight: 700,
-                      fontSize: '0.85rem',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    📝 Create Wholesale Account
-                  </button>
-                  <button 
-                    onClick={() => { setAuthMode('login'); setVerificationError(''); }}
-                    style={{
-                      flex: 1,
-                      background: authMode === 'login' ? '#2B8C8A' : 'transparent',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontWeight: 700,
-                      fontSize: '0.85rem',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    🔑 Member Log In
-                  </button>
-                </div>
+              {/* Form Mode Selector tabs */}
+              <div style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '12px', marginBottom: '25px' }}>
+                <button 
+                  type="button"
+                  onClick={() => { setAuthMode('register'); setAuthError(''); }}
+                  style={{
+                    flex: 1,
+                    background: authMode === 'register' ? '#2B8C8A' : 'transparent',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  📝 Create Wholesale Account
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => { setAuthMode('login'); setAuthError(''); }}
+                  style={{
+                    flex: 1,
+                    background: authMode === 'login' ? '#2B8C8A' : 'transparent',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  🔑 Member Log In
+                </button>
+              </div>
 
-                <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {authMode === 'register' && (
-                    <>
-                      <div>
-                        <label style={labelStyle}>REPRESENTATIVE FULL NAME</label>
+              <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {authMode === 'otp' && (
+                  <>
+                    <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+                      <h3 style={{ fontSize: '1.2rem', color: 'var(--secondary)', marginBottom: '10px' }}>Verify Your Number</h3>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>We sent a secure code to <strong>{phone}</strong>.</p>
+                      <p style={{ fontSize: '0.75rem', color: '#ff9800', marginTop: '5px' }}>For this demo, please enter <strong>1234</strong> to verify.</p>
+                    </div>
+                    <div>
+                      <label style={labelStyle}>ENTER OTP CODE</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. 1234" 
+                        value={otpCode}
+                        onChange={e => setOtpCode(e.target.value)}
+                        required
+                        maxLength={4}
+                        style={{ ...inputStyle, textAlign: 'center', fontSize: '1.5rem', letterSpacing: '8px' }}
+                      />
+                    </div>
+                  </>
+                )}
+                {authMode !== 'otp' && (
+                  <>
+                    {authMode === 'register' && (
+                      <>
+                    <div>
+                      <label style={labelStyle}>COMPANY / BUSINESS NAME</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Stark Chemical Distributors" 
+                        value={businessName}
+                        onChange={e => setBusinessName(e.target.value)}
+                        required
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '16px' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={labelStyle}>BUSINESS TYPE</label>
+                        <select 
+                          value={businessType}
+                          onChange={e => setBusinessType(e.target.value)}
+                          required
+                          style={{ ...inputStyle, WebkitAppearance: 'none', appearance: 'none', background: 'rgba(0,0,0,0.25) url("data:image/svg+xml;utf8,<svg fill=\'%23ffffff\' height=\'24\' viewBox=\'0 0 24 24\' width=\'24\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M7 10l5 5 5-5z\'/><path d=\'M0 0h24v24H0z\' fill=\'none\'/></svg>") no-repeat right 10px center' }}
+                        >
+                          <option value="supermarket">Supermarket</option>
+                          <option value="retail">Retail Shop</option>
+                          <option value="pharmacy">Pharmacy</option>
+                          <option value="hotel">Hotel</option>
+                          <option value="school">School</option>
+                          <option value="restaurant">Restaurant</option>
+                          <option value="distributor">Distributor</option>
+                          <option value="cleaning">Cleaning Company</option>
+                        </select>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={labelStyle}>LOCATION</label>
                         <input 
                           type="text" 
-                          placeholder="e.g. Jayden Stark" 
-                          value={repName}
-                          onChange={e => setRepName(e.target.value)}
+                          placeholder="e.g. Accra" 
+                          value={location}
+                          onChange={e => setLocation(e.target.value)}
                           required
                           style={inputStyle}
                         />
                       </div>
-                      <div>
-                        <label style={labelStyle}>COMPANY / BUSINESS NAME</label>
-                        <input 
-                          type="text" 
-                          placeholder="e.g. Stark Chemical Distributors" 
-                          value={companyName}
-                          onChange={e => setCompanyName(e.target.value)}
-                          required
-                          style={inputStyle}
-                        />
-                      </div>
-                      <div>
-                        <label style={labelStyle}>CORPORATE EMAIL ADDRESS</label>
-                        <input 
-                          type="email" 
-                          placeholder="e.g. jayden@starkchemicals.com" 
-                          value={email}
-                          onChange={e => setEmail(e.target.value)}
-                          required
-                          style={inputStyle}
-                        />
-                      </div>
-                    </>
-                  )}
-
-                  <div>
-                    <label style={labelStyle}>MOBILE NUMBER (SMS VERIFICATION CODE TARGET)</label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <div style={{ 
-                        background: 'rgba(0,0,0,0.25)', 
-                        border: '1px solid rgba(255,255,255,0.15)', 
-                        padding: '12px 14px', 
-                        borderRadius: '12px', 
-                        fontSize: '0.95rem',
-                        fontWeight: 700,
-                        color: 'rgba(255,255,255,0.85)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}>
-                        🇬🇭 <span>+233</span>
-                      </div>
+                    </div>
+                    <div>
+                      <label style={labelStyle}>OWNER / MANAGER NAME</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Jayden Stark" 
+                        value={fullName}
+                        onChange={e => setFullName(e.target.value)}
+                        required
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>PHONE NUMBER</label>
                       <input 
                         type="tel" 
-                        placeholder="e.g. 24 412 3456" 
+                        placeholder="e.g. 024 412 3456" 
                         value={phone}
                         onChange={e => setPhone(e.target.value)}
                         required
-                        style={{ ...inputStyle, flex: 1 }}
+                        style={inputStyle}
                       />
                     </div>
-                  </div>
+                  </>
+                )}
 
-                  {verificationError && (
-                    <div style={{ background: 'rgba(255, 68, 68, 0.1)', border: '1px solid #ff4444', padding: '10px 15px', borderRadius: '10px', fontSize: '0.8rem', color: '#ff8888', fontWeight: 600 }}>
-                      ⚠️ {verificationError}
-                    </div>
-                  )}
-
-                  <button 
-                    type="submit" 
-                    style={submitButtonStyle}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--secondary)'}
-                    onMouseLeave={e => e.currentTarget.style.background = '#2B8C8A'}
-                  >
-                    {authMode === 'register' ? 'Submit Registration' : 'Secure Log In'}
-                  </button>
-                </form>
-              </div>
+                <div>
+                  <label style={labelStyle}>EMAIL ADDRESS</label>
+                  <input 
+                    type="email" 
+                    placeholder="e.g. contact@business.com" 
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                    style={inputStyle}
+                  />
+                </div>
+                
+                <div>
+                  <label style={labelStyle}>SECURE PASSWORD</label>
+                  <input 
+                    type="password" 
+                    placeholder="••••••••" 
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    style={inputStyle}
+                  />
+                </div>
+              </>
             )}
 
-            {/* PHASE 2: reCAPTCHA CHALLENGE */}
-            {authState === 'recaptcha' && (
-              <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                <h4 style={{ fontFamily: 'Outfit', fontSize: '1.15rem', marginBottom: '15px', fontWeight: 700 }}>Security Verification</h4>
-                <p style={{ fontSize: '0.82rem', opacity: 0.75, lineHeight: 1.5, marginBottom: '25px' }}>
-                  Please solve the reCAPTCHA to request the secure SMS transaction code for verification.
-                </p>
-
-                {/* reCAPTCHA Box container */}
-                <div style={{
-                  background: '#f9f9f9',
-                  border: '1px solid #d3d3d3',
-                  borderRadius: '6px',
-                  padding: '16px 20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  width: '100%',
-                  maxWidth: '310px',
-                  margin: '0 auto 30px auto',
-                  color: '#333',
-                  boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {recaptchaLoading ? (
-                      <div style={{ width: '26px', height: '26px', border: '3px solid #f3f3f3', borderTop: '3px solid #4a90e2', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                    ) : (
-                      <input 
-                        type="checkbox" 
-                        checked={isRecaptchaChecked} 
-                        onChange={handleRecaptchaConfirm}
-                        style={{ width: '24px', height: '24px', cursor: 'pointer' }}
-                      />
-                    )}
-                    <span style={{ fontSize: '0.88rem', fontWeight: 550, fontFamily: 'Roboto, sans-serif', color: '#555' }}>
-                      I'm not a robot
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <img 
-                      src="https://www.gstatic.com/recaptcha/api2/logo_48.png" 
-                      alt="recaptcha" 
-                      style={{ height: '30px', width: '30px' }} 
-                    />
-                    <span style={{ fontSize: '0.55rem', opacity: 0.6, marginTop: '2px', color: '#555' }}>Privacy - Terms</span>
-                  </div>
-                </div>
-
-                <button 
-                  onClick={() => setAuthState('form')}
-                  style={{ background: 'transparent', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.2)', padding: '10px 20px', borderRadius: '10px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 }}
-                >
-                  Back to Details
-                </button>
-              </div>
-            )}
-
-            {/* PHASE 3: SMS OTP VERIFICATION INPUT */}
-            {authState === 'verify' && (
-              <div>
-                <h4 style={{ fontFamily: 'Outfit', fontSize: '1.25rem', marginBottom: '10px', fontWeight: 800, textAlign: 'center' }}>
-                  Enter Verification Code
-                </h4>
-                <p style={{ fontSize: '0.82rem', opacity: 0.75, lineHeight: 1.6, textAlign: 'center', marginBottom: '25px' }}>
-                  We have dispatched a secure 6-digit OTP to <strong style={{ color: 'var(--secondary)' }}>+233 {phone}</strong>. Enter it below to authorize.
-                </p>
-
-                {/* 6 digital inputs box */}
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '25px' }}>
-                  {otpCode.map((digit, idx) => (
-                    <input 
-                      key={idx}
-                      type="text"
-                      maxLength={1}
-                      value={digit}
-                      ref={el => otpInputsRef.current[idx] = el}
-                      onChange={e => handleOtpChange(idx, e.target.value)}
-                      onKeyDown={e => handleOtpKeyDown(idx, e)}
-                      style={{
-                        width: '46px',
-                        height: '52px',
-                        background: 'rgba(0,0,0,0.25)',
-                        border: digit ? '2px solid #2B8C8A' : '1px solid rgba(255,255,255,0.15)',
-                        borderRadius: '10px',
-                        fontSize: '1.4rem',
-                        fontWeight: 900,
-                        textAlign: 'center',
-                        color: 'white',
-                        transition: 'all 0.2s',
-                        boxShadow: digit ? '0 0 10px rgba(43, 140, 138, 0.4)' : 'none'
-                      }}
-                    />
-                  ))}
-                </div>
-
-                {verificationError && (
-                  <div style={{ background: 'rgba(255, 68, 68, 0.1)', border: '1px solid #ff4444', padding: '10px 15px', borderRadius: '10px', fontSize: '0.8rem', color: '#ff8888', fontWeight: 600, marginBottom: '20px', textAlign: 'center' }}>
-                    ⚠️ {verificationError}
+                {authError && (
+                  <div style={{ background: 'rgba(255, 68, 68, 0.1)', border: '1px solid #ff4444', padding: '10px 15px', borderRadius: '10px', fontSize: '0.8rem', color: '#ff8888', fontWeight: 600 }}>
+                    ⚠️ {authError}
                   </div>
                 )}
 
-                {/* Companion Sandbox test notice */}
-                <div style={{
-                  background: 'rgba(43, 140, 138, 0.12)',
-                  border: '1px dashed rgba(43, 140, 138, 0.3)',
-                  padding: '12px 18px',
-                  borderRadius: '14px',
-                  fontSize: '0.78rem',
-                  lineHeight: 1.5,
-                  textAlign: 'center',
-                  marginBottom: '25px',
-                  color: 'rgba(255,255,255,0.85)'
-                }}>
-                  💡 <strong>Sandbox SMS Simulator:</strong> Enter security key <span style={{ fontFamily: 'monospace', fontWeight: 800, color: 'var(--secondary)', fontSize: '0.88rem', background: 'rgba(0,0,0,0.3)', padding: '2px 8px', borderRadius: '4px' }}>192837</span> to verify.
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  <button 
-                    onClick={handleVerifyCode}
-                    disabled={isVerifying}
-                    style={submitButtonStyle}
-                  >
-                    {isVerifying ? (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                        <div style={{ width: '18px', height: '18px', border: '2px solid rgba(255,255,255,0.15)', borderTop: '2px solid white', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                        <span>Authorizing Credentials...</span>
-                      </div>
-                    ) : 'Verify & Activate Account'}
-                  </button>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', padding: '0 5px' }}>
-                    <span style={{ opacity: 0.6 }}>Didn't receive SMS?</span>
-                    {resendTimer > 0 ? (
-                      <span style={{ fontWeight: 650, color: 'var(--secondary)' }}>Resend OTP in {resendTimer}s</span>
-                    ) : (
-                      <button 
-                        onClick={() => { setResendTimer(60); setVerificationError(''); }}
-                        style={{ background: 'transparent', border: 'none', color: '#2B8C8A', fontWeight: 700, cursor: 'pointer', padding: 0 }}
-                      >
-                        Resend OTP Code
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* PHASE 4: SUCCESS VERIFIED ANIMATION */}
-            {authState === 'success' && (
-              <div style={{ textAlign: 'center', padding: '30px 0' }}>
-                <div style={{
-                  width: '76px',
-                  height: '76px',
-                  background: 'rgba(22, 163, 74, 0.15)',
-                  border: '3px solid #16a34a',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 20px auto',
-                  fontSize: '2.5rem',
-                  animation: 'pulseGreen 1.5s infinite'
-                }}>
-                  ✅
-                </div>
-                <h3 style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.45rem', marginBottom: '8px' }}>
-                  Mobile Verified Successfully
-                </h3>
-                <span style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', display: 'block', marginBottom: '15px' }}>
-                  B2B Credentials Active
-                </span>
-                <p style={{ fontSize: '0.85rem', opacity: 0.75, lineHeight: 1.5, marginBottom: '20px' }}>
-                  Welcome to Neat Brand Trade. Syncing wholesale ledger records and loading account workspace...
-                </p>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.78rem', color: 'var(--secondary)', fontWeight: 600 }}>
-                  <div style={{ width: '12px', height: '12px', border: '2px solid rgba(43, 140, 138, 0.2)', borderTop: '2px solid #2B8C8A', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                  <span>Configuring Account Vault...</span>
-                </div>
-                
-                {/* Auto redirect mechanism */}
-                {setTimeout(() => {
-                  if (typeof window !== 'undefined') {
-                    const stored = localStorage.getItem('nbt_active_user');
-                    if (stored) {
-                      setActiveUser(JSON.parse(stored));
-                    }
-                  }
-                }, 2200) && null}
-              </div>
-            )}
-
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  style={{
+                    ...submitButtonStyle,
+                    opacity: isSubmitting ? 0.7 : 1,
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer'
+                  }}
+                  onMouseEnter={e => { if (!isSubmitting) e.currentTarget.style.background = 'var(--secondary)'; }}
+                  onMouseLeave={e => { if (!isSubmitting) e.currentTarget.style.background = '#2B8C8A'; }}
+                >
+                  {isSubmitting ? (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                      <div style={{ width: '18px', height: '18px', border: '2px solid rgba(255,255,255,0.15)', borderTop: '2px solid white', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                      <span>{authMode === 'register' ? 'Creating Account...' : authMode === 'otp' ? 'Verifying...' : 'Authenticating...'}</span>
+                    </div>
+                  ) : (
+                    authMode === 'register' ? 'Continue →' : authMode === 'otp' ? 'Verify Account' : 'Secure Log In'
+                  )}
+                </button>
+              </form>
+            </div>
           </div>
-          <style>{`
+        </div>
+        <style>{`
             @keyframes pulseGreen {
               0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4); }
               70% { box-shadow: 0 0 0 15px rgba(22, 163, 74, 0); }
@@ -804,12 +572,12 @@ export default function AccountPage() {
             <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
               <div>
                 <span style={{ color: 'var(--secondary)', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '2px' }}>Customer Portal</span>
-                <h1 style={{ fontSize: '2.4rem', marginTop: '0.5rem', fontWeight: 800 }}>Welcome Back, {activeUser.representative}</h1>
-                <p style={{ margin: '5px 0 0', opacity: 0.85, fontSize: '1rem' }}>{activeUser.company} • {activeUser.tier}</p>
+                <h1 style={{ fontSize: '2.4rem', marginTop: '0.5rem', fontWeight: 800 }}>Welcome Back, {userFullName}</h1>
+                <p style={{ margin: '5px 0 0', opacity: 0.85, fontSize: '1rem' }}>{userCompany} • <span style={{textTransform:'capitalize'}}>{userTier}</span></p>
               </div>
               <div style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', padding: '15px 25px', borderRadius: '16px' }}>
                 <span style={{ fontSize: '0.75rem', opacity: 0.7, textTransform: 'uppercase', display: 'block' }}>Active Discount Code</span>
-                <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--secondary)', letterSpacing: '1px' }}>{activeUser.discountCode}</span>
+                <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--secondary)', letterSpacing: '1px' }}>{userDiscountCode}</span>
               </div>
             </div>
           </section>
@@ -869,7 +637,6 @@ export default function AccountPage() {
 
               {/* Mobile top capsule horizontal navigation bar (Touch Target >= 48px comfortable padding) */}
               <div className="mobile-capsules" style={{
-                display: 'none',
                 gap: '8px',
                 overflowX: 'auto',
                 padding: '5px 0 15px 0',
@@ -912,68 +679,282 @@ export default function AccountPage() {
                 
                 {/* 1. DASHBOARD TAB */}
                 {activeSubTab === 'dashboard' && (
-                  <div>
-                    <h2 style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.45rem', marginBottom: '20px', color: 'var(--primary)' }}>📊 Corporate Ledger Overview</h2>
+                  <>
+                  <div className="mobile-hide" style={{ width: '100%' }}>
+                    <h2 style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.45rem', marginBottom: '20px', color: 'var(--primary)' }}>Hello, {activeUser.businessName || activeUser.fullName}</h2>
                     
-                    {/* Credit warning Alert */}
-                    {creditPercent >= 80 && (
-                      <div style={{
-                        background: 'rgba(239, 68, 68, 0.08)',
-                        border: '1px solid #ef4444',
-                        padding: '16px 20px',
-                        borderRadius: '16px',
-                        marginBottom: '25px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '15px',
-                        color: '#ef4444'
-                      }}>
-                        <span style={{ fontSize: '1.5rem' }}>⚠️</span>
-                        <div style={{ fontSize: '0.85rem', lineHeight: '1.5' }}>
-                          <strong>High Credit Utilization Warning:</strong> Your wholesale account has utilized <strong>{creditPercent.toFixed(1)}%</strong> of the allocated GH₵ {activeUser.creditLimit.toLocaleString()} credit limit. Please settle outstanding invoices under the Orders tab to resume priority manufacturing dispatch.
-                        </div>
+                    {/* Quick Order Center */}
+                    <div style={{ background: 'linear-gradient(135deg, rgba(43, 140, 138, 0.1) 0%, rgba(11, 35, 57, 0.05) 100%)', padding: '30px', borderRadius: '16px', marginBottom: '35px', border: '1px solid rgba(43, 140, 138, 0.2)' }}>
+                      <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '20px', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '1.5rem' }}>⚡</span> Quick Order Center
+                      </h3>
+                      <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                        <Link href="/products" style={{ textDecoration: 'none', flexGrow: 1 }}>
+                          <button style={{ width: '100%', padding: '16px', fontSize: '1rem', borderRadius: '12px', background: 'var(--primary)', color: 'white', border: 'none', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                            Browse Products
+                          </button>
+                        </Link>
+                        <button onClick={() => setActiveSubTab('orders')} style={{ flexGrow: 1, padding: '16px', fontSize: '1rem', borderRadius: '12px', background: 'white', border: '2px solid var(--primary)', color: 'var(--primary)', fontWeight: 700, cursor: 'pointer' }}>
+                          Reorder Previous Purchase
+                        </button>
+                        <Link href="/bulk-orders" style={{ textDecoration: 'none', flexGrow: 1 }}>
+                          <button style={{ width: '100%', padding: '16px', fontSize: '1rem', borderRadius: '12px', background: 'white', border: '2px solid var(--border)', color: 'var(--text-main)', fontWeight: 700, cursor: 'pointer' }}>
+                            Request Bulk Quote
+                          </button>
+                        </Link>
                       </div>
-                    )}
+                    </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+                    {/* Business Overview & Savings */}
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '15px', color: 'var(--text-main)' }}>Business Overview</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '35px' }}>
                       <div style={{ ...ledgerBoxStyle, padding: '24px', background: 'white', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>💳 CREDIT LIMIT</span>
-                        <strong style={{ fontSize: '1.55rem', color: 'var(--primary)', display: 'block', marginTop: '8px', fontFamily: 'Outfit' }}>GH₵ {activeUser.creditLimit.toLocaleString('en-US')}</strong>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>Credit Limit</span>
+                        <strong style={{ fontSize: '1.55rem', color: 'var(--primary)', display: 'block', marginTop: '8px', fontFamily: 'Outfit' }}>GH₵ {userCreditLimit.toLocaleString('en-US')}</strong>
                       </div>
                       <div style={{ ...ledgerBoxStyle, padding: '24px', background: 'white', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>⚠️ OUTSTANDING CREDIT</span>
-                        <strong style={{ fontSize: '1.55rem', color: '#ff4444', display: 'block', marginTop: '8px', fontFamily: 'Outfit' }}>GH₵ {activeUser.creditUsed.toLocaleString('en-US')}</strong>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>Outstanding Credit</span>
+                        <strong style={{ fontSize: '1.55rem', color: '#ff4444', display: 'block', marginTop: '8px', fontFamily: 'Outfit' }}>GH₵ {userCreditUsed.toLocaleString('en-US')}</strong>
                       </div>
                       <div style={{ ...ledgerBoxStyle, padding: '24px', background: 'white', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>✓ AVAILABLE CREDIT</span>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>Available Credit</span>
                         <strong style={{ fontSize: '1.55rem', color: 'var(--secondary)', display: 'block', marginTop: '8px', fontFamily: 'Outfit' }}>GH₵ {remainingCredit.toLocaleString('en-US')}</strong>
                       </div>
+                      
+                      {/* Monthly Savings Widget */}
+                      <div style={{ ...ledgerBoxStyle, padding: '24px', background: 'linear-gradient(135deg, var(--secondary) 0%, #1a5b59 100%)', color: 'white', border: 'none', boxShadow: '0 10px 25px -5px rgba(43, 140, 138, 0.4)' }}>
+                        <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.8)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>This Month</span>
+                          <span>🏆</span>
+                        </span>
+                        <div style={{ marginTop: '12px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.85rem' }}>
+                            <span>Orders:</span>
+                            <span style={{ fontWeight: 700 }}>GHS {(userOrders.reduce((acc, curr) => acc + curr.total, 0) || 12500).toLocaleString('en-US')}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.85rem' }}>
+                            <span>Products Purchased:</span>
+                            <span style={{ fontWeight: 700 }}>{userOrders.reduce((acc, curr) => acc + (Array.isArray(curr.items) ? curr.items.length : (typeof curr.items === 'string' ? curr.items.split(',').length : 1)), 0) || 24}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.2)', fontSize: '1.1rem' }}>
+                            <span>Savings:</span>
+                            <span style={{ fontWeight: 800 }}>GHS {((userOrders.reduce((acc, curr) => acc + curr.total, 0) * (activeUser?.discountRate || 0.05)) || 1350).toLocaleString('en-US')}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
-                    <div style={{ background: 'white', padding: '24px', borderRadius: '20px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)', marginBottom: '30px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '10px' }}>
-                        <span style={{ fontWeight: 600 }}>Credit Utilization Ratio</span>
-                        <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{creditPercent.toFixed(1)}% Used</span>
-                      </div>
-                      <div style={{ height: '10px', background: '#f1f5f9', borderRadius: '5px', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${creditPercent}%`, background: creditPercent >= 80 ? '#ff4444' : 'var(--secondary)', borderRadius: '5px', transition: 'width 0.5s ease' }}></div>
+                    {/* Special Offers */}
+                    <div style={{ marginBottom: '35px' }}>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '15px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ color: '#F59E0B' }}>🔥</span> Special Offers
+                      </h3>
+                      <div className="account-grid-layout" style={{ display: 'flex', gap: '20px' }}>
+                        {/* Offer 1 */}
+                        <div style={{ flex: 1, background: 'white', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', padding: '20px', gap: '20px', boxShadow: 'var(--shadow-sm)' }}>
+                          <div style={{ width: '80px', height: '80px', background: '#f8fafc', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>🧪</div>
+                          <div style={{ flexGrow: 1 }}>
+                            <h4 style={{ margin: '0 0 5px 0', fontSize: '1.1rem', color: 'var(--primary)' }}>20L Disinfectant</h4>
+                            <div style={{ color: 'var(--secondary)', fontWeight: 800, fontSize: '1.2rem', marginBottom: '10px' }}>GHS 250 <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 500 }}>GHS 320</span></div>
+                            <button onClick={() => alert("Added to Cart")} style={{ padding: '8px 16px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}>Order Now</button>
+                          </div>
+                        </div>
+                        {/* Offer 2 */}
+                        <div style={{ flex: 1, background: 'white', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', padding: '20px', gap: '20px', boxShadow: 'var(--shadow-sm)' }}>
+                          <div style={{ width: '80px', height: '80px', background: '#f8fafc', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>✨</div>
+                          <div style={{ flexGrow: 1 }}>
+                            <h4 style={{ margin: '0 0 5px 0', fontSize: '1.1rem', color: 'var(--primary)' }}>Floor Cleaner 25L</h4>
+                            <div style={{ color: 'var(--secondary)', fontWeight: 800, fontSize: '1.2rem', marginBottom: '10px' }}>GHS 180 <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 500 }}>GHS 240</span></div>
+                            <button onClick={() => alert("Added to Cart")} style={{ padding: '8px 16px', background: 'white', color: 'var(--primary)', border: '1px solid var(--primary)', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}>Add to Cart</button>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    <div style={{
-                      background: 'var(--primary)',
-                      color: 'white',
-                      padding: '30px',
-                      borderRadius: '20px',
-                      boxShadow: 'var(--shadow-md)'
-                    }}>
-                      <h4 style={{ color: 'var(--secondary)', margin: '0 0 8px 0', fontSize: '0.8rem', letterSpacing: '1.5px', textTransform: 'uppercase', fontWeight: 800 }}>Laboratory Dispatch Notice</h4>
-                      <h3 style={{ fontSize: '1.3rem', fontWeight: 800, marginBottom: '10px', fontFamily: 'Outfit' }}>Rapid Batch Shipments Active</h3>
-                      <p style={{ opacity: 0.85, fontSize: '0.88rem', lineHeight: '1.6', margin: 0 }}>
-                        All bulk wholesale formulation matching is prioritized. Standard dispatch is scheduled within 12 hours from our central manufacturing warehouse. Ensure your credit limits remain under 80% to avoid laboratory formulation dispatch holds.
-                      </p>
+                    {/* Recommended Products */}
+                    <div style={{ marginBottom: '35px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Recommended Products</h3>
+                        <Link href="/products" style={{ color: 'var(--secondary)', fontSize: '0.85rem', fontWeight: 700, textDecoration: 'none' }}>View Catalog →</Link>
+                      </div>
+                      <div className="product-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px' }}>
+                        {[
+                          { id: 1, name: 'Industrial Degreaser 5L', price: 'GHS 120', icon: '🛢️' },
+                          { id: 2, name: 'Liquid Hand Wash 5L', price: 'GHS 85', icon: '🧴' },
+                          { id: 3, name: 'Glass Cleaner 5L', price: 'GHS 90', icon: '🪟' },
+                          { id: 4, name: 'Multi-Purpose Cleaner 20L', price: 'GHS 210', icon: '🧽' }
+                        ].map(prod => (
+                          <div key={prod.id} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: '12px', padding: '15px', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
+                            <div style={{ width: '100%', height: '120px', background: '#f8fafc', borderRadius: '8px', marginBottom: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem' }}>{prod.icon}</div>
+                            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-main)', marginBottom: '5px' }}>{prod.name}</div>
+                            <div style={{ color: 'var(--secondary)', fontWeight: 800, marginBottom: '15px' }}>{prod.price}</div>
+                            <button onClick={() => alert(`${prod.name} Added to Cart`)} style={{ width: '100%', padding: '8px', background: 'white', border: '1px solid var(--border)', borderRadius: '8px', fontWeight: 600, color: 'var(--primary)', cursor: 'pointer', transition: 'all 0.2s' }}>Add to Cart</button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Recent Orders Overview */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Recent Orders</h3>
+                      <button onClick={() => setActiveSubTab('orders')} style={{ background: 'none', border: 'none', color: 'var(--secondary)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>View All →</button>
+                    </div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '35px' }}>
+                      {userOrders.slice(0, 3).map(order => (
+                        <div key={order.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: 'white', padding: '16px 20px', borderRadius: '12px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)', flexWrap: 'wrap', gap: '10px' }}>
+                          <div>
+                            <div style={{ fontWeight: 800, color: 'var(--primary)', marginBottom: '4px' }}>Order #{order.id}</div>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Amount: GHS {order.total.toLocaleString('en-US')}</div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ background: order.status === 'Processing' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(43, 140, 138, 0.1)', color: order.status === 'Processing' ? '#F59E0B' : 'var(--secondary)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, display: 'inline-block', marginBottom: '6px' }}>
+                              Status: {order.status}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Expected Delivery: {order.date}</div>
+                          </div>
+                        </div>
+                      ))}
+                      {userOrders.length === 0 && (
+                        <div style={{ padding: '30px', textAlign: 'center', background: '#f8fafc', borderRadius: '12px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                          No recent orders found.
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Account Manager */}
+                    <div style={{ background: 'white', padding: '24px', borderRadius: '16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                      <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '1.5rem', fontWeight: 800 }}>PJ</div>
+                      <div style={{ flexGrow: 1 }}>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)', margin: '0 0 5px 0' }}>Your NBT Account Manager</h3>
+                        <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '10px' }}>Prince Johnson Afenyo</p>
+                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                          <button onClick={() => window.open('https://wa.me/233246272115', '_blank')} style={{ padding: '6px 12px', background: '#25D366', color: 'white', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>💬 WhatsApp</button>
+                          <a href="tel:+233246272115" style={{ textDecoration: 'none' }}><button style={{ padding: '6px 12px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>📞 Call</button></a>
+                          <a href="mailto:info@neatbrandtrade.com" style={{ textDecoration: 'none' }}><button style={{ padding: '6px 12px', background: 'white', color: 'var(--primary)', border: '1px solid var(--primary)', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>✉️ Email</button></a>
+                        </div>
+                      </div>
                     </div>
                   </div>
+
+                  {/* MOBILE ACCOUNT DASHBOARD */}
+                  <div className="mobile-account-wrapper mobile-show">
+                    <div className="mobile-account-header">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#e2e8f0', color: '#0B2339', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 800 }}>
+                          {(activeUser.fullName || activeUser.businessName || 'US').split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}
+                        </div>
+                        <div>
+                          <h2 style={{ margin: '0 0 4px 0', fontSize: '1.25rem', fontWeight: 700 }}>{activeUser.fullName || activeUser.businessName || 'User'}</h2>
+                          <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)' }}>{activeUser.email} &middot; {activeUser.role === 'buyer' ? 'Wholesale account' : 'Retail account'}</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', gap: '15px', padding: '20px 15px', marginTop: '-30px', position: 'relative', zIndex: 10 }}>
+                      <div className="mobile-account-card" style={{ flex: 1, margin: 0, padding: '15px' }}>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '8px' }}>Total orders</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>{userOrders.length}</div>
+                      </div>
+                      <div className="mobile-account-card" style={{ flex: 1, margin: 0, padding: '15px' }}>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '8px' }}>Total spent</div>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)' }}>GHS {userOrders.reduce((acc, order) => acc + (order.total || 0), 0).toLocaleString('en-US')}</div>
+                      </div>
+                    </div>
+                    
+                    <div style={{ padding: '0 15px', marginBottom: '20px' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '1px', marginBottom: '10px', textTransform: 'uppercase' }}>Recent Orders</div>
+                      
+                      {userOrders.slice(0, 2).map(order => (
+                        <div key={order.id} className="mobile-account-card" style={{ padding: '15px', marginBottom: '10px' }}>
+                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: order.status === 'Processing' ? '#F59E0B' : '#10B981' }}></div>
+                                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-main)' }}>Order #{order.id}</div>
+                                </div>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>GHS {order.total.toLocaleString('en-US')} &middot; {order.date}</div>
+                              </div>
+                              <div style={{ background: order.status === 'Processing' ? '#FEF3C7' : '#D1FAE5', color: order.status === 'Processing' ? '#92400E' : '#065F46', padding: '4px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700 }}>
+                                {order.status}
+                              </div>
+                           </div>
+                        </div>
+                      ))}
+                      {userOrders.length === 0 && (
+                        <div className="mobile-account-card" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                           No recent orders
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div style={{ padding: '0 15px', marginBottom: '20px' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '1px', marginBottom: '10px', textTransform: 'uppercase' }}>Quick Actions</div>
+                      
+                      <div className="mobile-account-card" style={{ margin: 0 }}>
+                        <div className="mobile-account-row" onClick={() => setActiveSubTab('orders')}>
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <div className="mobile-account-row-icon" style={{ color: '#10B981', background: '#D1FAE5' }}>📦</div>
+                            <div>
+                              <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>My orders</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>View all order history</div>
+                            </div>
+                          </div>
+                          <div style={{ color: '#cbd5e1' }}>❯</div>
+                        </div>
+                        <div className="mobile-account-row" onClick={() => setActiveSubTab('settings')}>
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <div className="mobile-account-row-icon" style={{ color: '#0EA5E9', background: '#E0F2FE' }}>📍</div>
+                            <div>
+                              <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>Delivery addresses</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Manage saved locations</div>
+                            </div>
+                          </div>
+                          <div style={{ color: '#cbd5e1' }}>❯</div>
+                        </div>
+                        <div className="mobile-account-row" onClick={() => setActiveSubTab('invoices')}>
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <div className="mobile-account-row-icon" style={{ color: '#F59E0B', background: '#FEF3C7' }}>🧾</div>
+                            <div>
+                              <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>Invoices & receipts</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Download past invoices</div>
+                            </div>
+                          </div>
+                          <div style={{ color: '#cbd5e1' }}>❯</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div style={{ padding: '0 15px', marginBottom: '20px' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '1px', marginBottom: '10px', textTransform: 'uppercase' }}>Account</div>
+                      
+                      <div className="mobile-account-card" style={{ margin: 0, marginBottom: '15px' }}>
+                        <div className="mobile-account-row" onClick={() => setActiveSubTab('settings')}>
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <div className="mobile-account-row-icon" style={{ color: 'var(--text-main)', background: '#f1f5f9' }}>👤</div>
+                            <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>Edit profile</div>
+                          </div>
+                          <div style={{ color: '#cbd5e1' }}>❯</div>
+                        </div>
+                        <div className="mobile-account-row" onClick={() => setActiveSubTab('settings')}>
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <div className="mobile-account-row-icon" style={{ color: 'var(--text-main)', background: '#f1f5f9' }}>🔒</div>
+                            <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>Change password</div>
+                          </div>
+                          <div style={{ color: '#cbd5e1' }}>❯</div>
+                        </div>
+                      </div>
+                      
+                      <button onClick={() => window.open('https://wa.me/233246272115', '_blank')} style={{ width: '100%', background: '#25D366', color: 'white', padding: '16px', borderRadius: '12px', border: 'none', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '1rem', marginBottom: '15px', cursor: 'pointer', boxShadow: '0 4px 6px rgba(37, 211, 102, 0.2)' }}>
+                         💬 Chat with us on WhatsApp
+                      </button>
+                      
+                      <button onClick={handleSignOut} style={{ width: '100%', background: 'white', border: '1px solid var(--border)', color: '#EF4444', padding: '16px', borderRadius: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '0.95rem', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
+                         🚪 Sign out
+                      </button>
+                    </div>
+                  </div>
+                  </>
                 )}
 
                 {/* 2. ORDERS TAB */}
@@ -981,12 +962,12 @@ export default function AccountPage() {
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
                       <h2 style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.45rem', color: 'var(--primary)', margin: 0 }}>📦 Wholesale Order History</h2>
-                      <span style={{ fontSize: '0.85rem', background: '#e2e8f0', padding: '4px 10px', borderRadius: '30px', fontWeight: 650 }}>{activeUser.orders ? activeUser.orders.length : 0} Orders Total</span>
+                      <span style={{ fontSize: '0.85rem', background: '#e2e8f0', padding: '4px 10px', borderRadius: '30px', fontWeight: 650 }}>{userOrders.length} Orders Total</span>
                     </div>
 
                     {/* Table view for Desktop */}
                     <div className="desktop-orders-table" style={{ background: 'white', borderRadius: '20px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-                      <div style={{ overflowX: 'auto' }}>
+                      <div className="desktop-table-container" style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                           <thead>
                             <tr style={{ borderBottom: '2px solid #f1f5f9', color: 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', background: '#f8fafc' }}>
@@ -999,11 +980,11 @@ export default function AccountPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            {activeUser.orders && activeUser.orders.map((o) => (
+                            {userOrders.map((o) => (
                               <tr key={o.id} style={{ borderBottom: '1px solid #f1f5f9', fontSize: '0.9rem', transition: 'background 0.2s' }}>
                                 <td style={{ padding: '18px 20px', fontWeight: 700, color: 'var(--primary)' }}>{o.id}</td>
                                 <td style={{ padding: '18px 20px', color: 'var(--text-muted)' }}>{o.date}</td>
-                                <td style={{ padding: '18px 20px', color: 'var(--text-main)', maxWidth: '280px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.items}</td>
+                                <td style={{ padding: '18px 20px', color: 'var(--text-main)', maxWidth: '280px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{Array.isArray(o.items) ? o.items.map(i => i.name || i).join(', ') : o.items}</td>
                                 <td style={{ padding: '18px 20px', fontWeight: 700 }}>GH₵ {o.total.toLocaleString('en-US')}</td>
                                 <td style={{ padding: '18px 20px' }}>
                                   <span style={{ background: 'rgba(43, 140, 138, 0.1)', color: 'var(--secondary)', fontSize: '0.75rem', fontWeight: 700, padding: '4px 10px', borderRadius: '30px' }}>{o.status}</span>
@@ -1034,8 +1015,8 @@ export default function AccountPage() {
                     </div>
 
                     {/* Card view for Mobile (to guarantee no side scroll!) */}
-                    <div className="mobile-orders-cards" style={{ display: 'none', flexDirection: 'column', gap: '15px' }}>
-                      {activeUser.orders && activeUser.orders.map((o) => (
+                    <div className="mobile-cards-container mobile-orders-cards" style={{ display: 'none', flexDirection: 'column', gap: '15px' }}>
+                      {userOrders.map((o) => (
                         <div key={o.id} style={{
                           background: 'white',
                           border: '1px solid var(--border)',
@@ -1052,7 +1033,7 @@ export default function AccountPage() {
                           </div>
                           <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                             <div>📅 Date: {o.date}</div>
-                            <div style={{ color: 'var(--text-main)', fontWeight: 550 }}>🧪 {o.items}</div>
+                            <div style={{ color: 'var(--text-main)', fontWeight: 550 }}>🧪 {Array.isArray(o.items) ? o.items.map(i => i.name || i).join(', ') : o.items}</div>
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '12px', marginTop: '4px' }}>
                             <strong style={{ fontSize: '1.1rem', color: 'var(--primary)' }}>GH₵ {o.total.toLocaleString('en-US')}</strong>
@@ -1079,7 +1060,8 @@ export default function AccountPage() {
                 )}
 
                 {/* 3. WISHLIST TAB */}
-                {activeSubTab === 'wishlist' && (
+                {/* 3. SAVED PRODUCTS TAB */}
+                {activeSubTab === 'saved-products' && (
                   <div>
                     <h2 style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.45rem', marginBottom: '20px', color: 'var(--primary)' }}>💖 Saved Wholesale Formulation Watchlists</h2>
                     
@@ -1113,7 +1095,7 @@ export default function AccountPage() {
                               <div style={{ marginTop: 'auto', borderTop: '1px solid #f1f5f9', paddingTop: '15px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
                                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>WHOLESALE PRICE:</span>
-                                  <strong style={{ fontSize: '1.15rem', color: 'var(--primary)' }}>GH₵ {item.price.toLocaleString()}</strong>
+                                  <strong style={{ fontSize: '1.15rem', color: 'var(--primary)' }}>GH₵ {item.price.toLocaleString('en-US')}</strong>
                                 </div>
                                 <div style={{ display: 'flex', gap: '8px' }}>
                                   <button 
@@ -1160,195 +1142,26 @@ export default function AccountPage() {
                   </div>
                 )}
 
-                {/* 4. ADDRESSES TAB */}
-                {activeSubTab === 'addresses' && (
+                {/* 4. INVOICES TAB */}
+                {activeSubTab === 'invoices' && (
                   <div>
-                    <h2 style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.45rem', marginBottom: '20px', color: 'var(--primary)' }}>📍 Ship-To Site & Coordinator Registry</h2>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-                      {customAddresses.map((site) => (
-                        <div key={site.id} style={{
-                          background: 'white',
-                          border: '1px solid var(--border)',
-                          borderRadius: '16px',
-                          padding: '20px',
-                          boxShadow: 'var(--shadow-sm)',
-                          position: 'relative'
-                        }}>
-                          {site.isPrimary && (
-                            <span style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(43, 140, 138, 0.12)', color: 'var(--secondary)', fontSize: '0.65rem', fontWeight: 800, padding: '3px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>
-                              Primary
-                            </span>
-                          )}
-                          <h4 style={{ fontFamily: 'Outfit', fontSize: '1.05rem', color: 'var(--primary)', marginBottom: '8px' }}>🏢 {site.name}</h4>
-                          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '15px', lineHeight: 1.4 }}>📍 {site.address}</p>
-                          <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '12px', fontSize: '0.78rem' }}>
-                            <div style={{ color: 'var(--text-muted)' }}>SITE COORDINATOR</div>
-                            <div style={{ fontWeight: 700, color: 'var(--primary)', marginTop: '2px' }}>👤 {site.coordinator}</div>
-                            <div style={{ color: 'var(--text-muted)', marginTop: '4px' }}>📞 {site.phone}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: '20px', padding: '25px', boxShadow: 'var(--shadow-sm)' }}>
-                      <h3 style={{ fontFamily: 'Outfit', fontSize: '1.15rem', color: 'var(--primary)', marginBottom: '15px', fontWeight: 800 }}>➕ Register New Delivery Warehouse Site</h3>
-                      <form onSubmit={handleAddAddress} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }} className="address-form-grid">
-                        <div>
-                          <label style={{ ...labelStyle, color: 'var(--text-muted)' }}>WAREHOUSE / SITE NAME</label>
-                          <input 
-                            type="text" 
-                            placeholder="e.g. Kumasi Distribution Depot" 
-                            value={newSiteName}
-                            onChange={e => setNewSiteName(e.target.value)}
-                            required
-                            style={{ ...inputStyle, background: '#f8fafc', border: '1px solid #d1d5db', color: '#0B2339' }}
-                          />
-                        </div>
-                        <div>
-                          <label style={{ ...labelStyle, color: 'var(--text-muted)' }}>SHIPPING ADDRESS</label>
-                          <input 
-                            type="text" 
-                            placeholder="e.g. Plot 45, Airport Residential, Kumasi" 
-                            value={newSiteAddr}
-                            onChange={e => setNewSiteAddr(e.target.value)}
-                            required
-                            style={{ ...inputStyle, background: '#f8fafc', border: '1px solid #d1d5db', color: '#0B2339' }}
-                          />
-                        </div>
-                        <div>
-                          <label style={{ ...labelStyle, color: 'var(--text-muted)' }}>SITE COORDINATOR FULL NAME</label>
-                          <input 
-                            type="text" 
-                            placeholder="e.g. Felix Boateng" 
-                            value={newSiteCoord}
-                            onChange={e => setNewSiteCoord(e.target.value)}
-                            required
-                            style={{ ...inputStyle, background: '#f8fafc', border: '1px solid #d1d5db', color: '#0B2339' }}
-                          />
-                        </div>
-                        <div>
-                          <label style={{ ...labelStyle, color: 'var(--text-muted)' }}>COORDINATOR PHONE (EXCL. +233)</label>
-                          <input 
-                            type="tel" 
-                            placeholder="e.g. 24 999 8888" 
-                            value={newSitePhone}
-                            onChange={e => setNewSitePhone(e.target.value)}
-                            required
-                            style={{ ...inputStyle, background: '#f8fafc', border: '1px solid #d1d5db', color: '#0B2339' }}
-                          />
-                        </div>
-                        <div style={{ gridColumn: 'span 2' }} className="address-form-submit">
-                          <button 
-                            type="submit" 
-                            style={{
-                              background: '#2B8C8A',
-                              color: 'white',
-                              border: 'none',
-                              padding: '12px 24px',
-                              borderRadius: '8px',
-                              cursor: 'pointer',
-                              fontWeight: 700,
-                              fontSize: '0.85rem',
-                              transition: 'all 0.2s',
-                              boxShadow: '0 4px 10px rgba(43, 140, 138, 0.15)'
-                            }}
-                          >
-                            ➕ Register Site Coordinate
-                          </button>
-                        </div>
-                      </form>
+                    <h2 style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.45rem', marginBottom: '20px', color: 'var(--primary)' }}>📄 Invoices & Statements</h2>
+                    <div style={{ padding: '40px 20px', textAlign: 'center', background: 'white', borderRadius: '20px', color: 'var(--text-muted)', fontSize: '0.9rem', border: '1px dashed var(--border)' }}>
+                      <span style={{ fontSize: '3rem', display: 'block', marginBottom: '10px' }}>🧾</span>
+                      <h3 style={{ fontFamily: 'Outfit', fontSize: '1.1rem', color: 'var(--text-main)' }}>You have no unpaid invoices.</h3>
+                      <p style={{ marginTop: '5px' }}>All billing statements and payment links will appear here.</p>
                     </div>
                   </div>
                 )}
 
-                {/* 5. SAVED PRODUCTS TAB */}
-                {activeSubTab === 'saved-products' && (
+                {/* 5. PURCHASE ORDERS TAB */}
+                {activeSubTab === 'purchase-orders' && (
                   <div>
-                    <h2 style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.45rem', marginBottom: '20px', color: 'var(--primary)' }}>🧪 Stark Bulk Formulation Library</h2>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '25px' }}>
-                      {savedProductsList.map((product) => {
-                        const activeSize = selectedSizes[product.id];
-                        const activePrice = product.pricing[activeSize];
-                        return (
-                          <div key={product.id} style={{
-                            background: 'white',
-                            border: '1px solid var(--border)',
-                            borderRadius: '20px',
-                            overflow: 'hidden',
-                            boxShadow: 'var(--shadow-sm)',
-                            display: 'flex',
-                            flexDirection: 'column'
-                          }}>
-                            <div style={{ height: '160px', position: 'relative' }}>
-                              <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              <div style={{ position: 'absolute', bottom: '15px', left: '15px', background: 'rgba(43, 140, 138, 0.9)', color: 'white', fontSize: '0.72rem', fontWeight: 800, padding: '4px 10px', borderRadius: '30px' }}>
-                                ✓ Stark Specs Match
-                              </div>
-                            </div>
-                            <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                              <h4 style={{ fontFamily: 'Outfit', fontSize: '1.15rem', color: 'var(--primary)', margin: 0 }}>{product.name}</h4>
-                              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>{product.description}</p>
-                              
-                              <div>
-                                <label style={{ ...labelStyle, color: 'var(--text-muted)', fontSize: '0.68rem', marginBottom: '4px' }}>CONTAINER PACKAGING SIZE</label>
-                                <select 
-                                  value={activeSize} 
-                                  onChange={(e) => setSelectedSizes(prev => ({ ...prev, [product.id]: e.target.value }))}
-                                  style={{
-                                    width: '100%',
-                                    padding: '10px 12px',
-                                    borderRadius: '8px',
-                                    border: '1px solid #d1d5db',
-                                    background: '#f8fafc',
-                                    color: 'var(--primary)',
-                                    fontWeight: 650,
-                                    fontSize: '0.85rem',
-                                    outline: 'none'
-                                  }}
-                                >
-                                  {Object.keys(product.pricing).map(sz => (
-                                    <option key={sz} value={sz}>{sz}</option>
-                                  ))}
-                                </select>
-                              </div>
-
-                              <div style={{ marginTop: 'auto', borderTop: '1px solid #f1f5f9', paddingTop: '15px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                                  <div>
-                                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block' }}>WHOLESALE VALUE</span>
-                                    <span style={{ fontSize: '0.65rem', color: '#16a34a', fontWeight: 700 }}>Margin saved 15%</span>
-                                  </div>
-                                  <strong style={{ fontSize: '1.35rem', color: 'var(--primary)', fontFamily: 'Outfit' }}>GH₵ {activePrice.toLocaleString()}</strong>
-                                </div>
-                                
-                                <button 
-                                  onClick={() => handleAddSavedProductToCart(product)}
-                                  style={{
-                                    width: '100%',
-                                    background: '#2B8C8A',
-                                    color: 'white',
-                                    border: 'none',
-                                    padding: '12px',
-                                    borderRadius: '10px',
-                                    cursor: 'pointer',
-                                    fontWeight: 700,
-                                    fontSize: '0.85rem',
-                                    transition: 'all 0.2s',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '8px'
-                                  }}
-                                >
-                                  🛒 Add Wholesale Batch to Cart
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
+                    <h2 style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.45rem', marginBottom: '20px', color: 'var(--primary)' }}>📝 Purchase Orders (POs)</h2>
+                    <div style={{ padding: '40px 20px', textAlign: 'center', background: 'white', borderRadius: '20px', color: 'var(--text-muted)', fontSize: '0.9rem', border: '1px dashed var(--border)' }}>
+                      <span style={{ fontSize: '3rem', display: 'block', marginBottom: '10px' }}>🗂️</span>
+                      <h3 style={{ fontFamily: 'Outfit', fontSize: '1.1rem', color: 'var(--text-main)' }}>No active purchase orders.</h3>
+                      <p style={{ marginTop: '5px' }}>Submit a PO to request custom bulk quotes or net-30 terms.</p>
                     </div>
                   </div>
                 )}
@@ -1471,19 +1284,19 @@ export default function AccountPage() {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', fontSize: '0.88rem' }}>
                           <div>
                             <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.7rem', fontWeight: 750, letterSpacing: '1px' }}>REPRESENTATIVE NAME</span>
-                            <span style={{ color: 'var(--text-main)', fontWeight: 650, fontSize: '0.98rem', display: 'block', marginTop: '4px' }}>{activeUser.representative}</span>
+                            <span style={{ color: 'var(--text-main)', fontWeight: 650, fontSize: '0.98rem', display: 'block', marginTop: '4px' }}>{userFullName}</span>
                           </div>
                           <div>
                             <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.7rem', fontWeight: 750, letterSpacing: '1px' }}>COMPANY / BUSINESS NAME</span>
-                            <span style={{ color: 'var(--text-main)', fontWeight: 650, fontSize: '0.98rem', display: 'block', marginTop: '4px' }}>{activeUser.company}</span>
+                            <span style={{ color: 'var(--text-main)', fontWeight: 650, fontSize: '0.98rem', display: 'block', marginTop: '4px' }}>{userCompany}</span>
                           </div>
                           <div>
                             <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.7rem', fontWeight: 750, letterSpacing: '1px' }}>VERIFIED EMAIL ADDRESS</span>
-                            <span style={{ color: 'var(--text-main)', fontWeight: 650, fontSize: '0.98rem', display: 'block', marginTop: '4px' }}>{activeUser.email}</span>
+                            <span style={{ color: 'var(--text-main)', fontWeight: 650, fontSize: '0.98rem', display: 'block', marginTop: '4px' }}>{userEmail}</span>
                           </div>
                           <div>
                             <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.7rem', fontWeight: 750, letterSpacing: '1px' }}>SECURE VERIFICATION PHONE</span>
-                            <span style={{ color: 'var(--text-main)', fontWeight: 650, fontSize: '0.98rem', display: 'block', marginTop: '4px' }}>+233 {activeUser.phone}</span>
+                            <span style={{ color: 'var(--text-main)', fontWeight: 650, fontSize: '0.98rem', display: 'block', marginTop: '4px' }}>{userPhone}</span>
                           </div>
                         </div>
                       </div>
@@ -1495,7 +1308,7 @@ export default function AccountPage() {
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', fontSize: '0.85rem' }}>
                             <div>
                               <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.68rem', fontWeight: 750 }}>PORTFOLIO CLASSIFICATION</span>
-                              <span style={{ color: 'var(--secondary)', fontWeight: 800, fontSize: '1rem', display: 'block', marginTop: '4px' }}>{activeUser.tier}</span>
+                              <span style={{ color: 'var(--secondary)', fontWeight: 800, fontSize: '1rem', display: 'block', marginTop: '4px', textTransform:'capitalize' }}>{userTier}</span>
                             </div>
                             <div>
                               <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.68rem', fontWeight: 750 }}>IDENTITY VERIFICATION</span>
@@ -1506,7 +1319,7 @@ export default function AccountPage() {
                             <div>
                               <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.68rem', fontWeight: 750 }}>DYNAMIC DISCOUNT PARTNER CODE</span>
                               <code style={{ background: '#f1f5f9', padding: '3px 8px', borderRadius: '4px', fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 700, display: 'inline-block', marginTop: '4px', border: '1px solid #e2e8f0' }}>
-                                {activeUser.discountCode}
+                                {userDiscountCode}
                               </code>
                             </div>
                           </div>

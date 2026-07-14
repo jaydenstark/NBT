@@ -93,7 +93,7 @@ export default function ClientPage({ initialProducts }) {
             borderBottom: '1px solid var(--border)',
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02)'
           }}>
-            <div className="container" style={{
+            <div className="container trust-section-grid" style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -281,7 +281,9 @@ export default function ClientPage({ initialProducts }) {
             }}>
               {/* Category cards list */}
               <Link href="/products?category=industrial cleaners">
-                <div className="category-card" style={{ background: 'linear-gradient(135deg, #0B2339 0%, #153e63 100%)' }}>
+                <div className="category-card" style={{ 
+                  background: 'linear-gradient(135deg, rgba(11, 35, 57, 0.85) 0%, rgba(21, 62, 99, 0.9) 100%), url("https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=600&q=80") center/cover no-repeat'
+                }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🧪</div>
                   <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Industrial Cleaners</h3>
                   <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85rem', margin: 0 }}>High-concentration chemical solutions for industrial output and factories.</p>
@@ -289,7 +291,9 @@ export default function ClientPage({ initialProducts }) {
               </Link>
 
               <Link href="/disinfectants-ghana">
-                <div className="category-card" style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)' }}>
+                <div className="category-card" style={{ 
+                  background: 'linear-gradient(135deg, rgba(30, 58, 138, 0.85) 0%, rgba(59, 130, 246, 0.9) 100%), url("https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80") center/cover no-repeat'
+                }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🛡️</div>
                   <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Disinfectants</h3>
                   <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85rem', margin: 0 }}>Medical grade sanitizers and chemical disinfectants for clinical protection.</p>
@@ -297,7 +301,9 @@ export default function ClientPage({ initialProducts }) {
               </Link>
 
               <Link href="/products?category=hygiene products">
-                <div className="category-card" style={{ background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)' }}>
+                <div className="category-card" style={{ 
+                  background: 'linear-gradient(135deg, rgba(15, 118, 110, 0.85) 0%, rgba(20, 184, 166, 0.9) 100%), url("https://images.unsplash.com/photo-1608222351212-18fe0ec7b13b?auto=format&fit=crop&w=600&q=80") center/cover no-repeat'
+                }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>✨</div>
                   <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Sanitizers</h3>
                   <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85rem', margin: 0 }}>Personal and general-use hand sanitizers, washes, and skin soaps.</p>
@@ -305,7 +311,9 @@ export default function ClientPage({ initialProducts }) {
               </Link>
 
               <Link href="/products?category=cleaning">
-                <div className="category-card" style={{ background: 'linear-gradient(135deg, #475569 0%, #64748b 100%)' }}>
+                <div className="category-card" style={{ 
+                  background: 'linear-gradient(135deg, rgba(71, 85, 105, 0.85) 0%, rgba(100, 116, 139, 0.9) 100%), url("https://images.unsplash.com/photo-1517677129300-07b130802f46?auto=format&fit=crop&w=600&q=80") center/cover no-repeat'
+                }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🧺</div>
                   <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Laundry</h3>
                   <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85rem', margin: 0 }}>Concentrated fabric softeners, washing powders, and liquid detergents.</p>
@@ -313,7 +321,9 @@ export default function ClientPage({ initialProducts }) {
               </Link>
 
               <Link href="/products?category=hygiene products">
-                <div className="category-card" style={{ background: 'linear-gradient(135deg, #0369a1 0%, #0ea5e9 100%)' }}>
+                <div className="category-card" style={{ 
+                  background: 'linear-gradient(135deg, rgba(3, 105, 161, 0.85) 0%, rgba(14, 165, 233, 0.9) 100%), url("https://images.unsplash.com/photo-1602928321679-560bb453f190?auto=format&fit=crop&w=600&q=80") center/cover no-repeat'
+                }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🌬️</div>
                   <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Air Fresheners</h3>
                   <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85rem', margin: 0 }}>Long-lasting mist sprays and neutralizers to eliminate harsh odors.</p>
@@ -321,7 +331,9 @@ export default function ClientPage({ initialProducts }) {
               </Link>
 
               <Link href="/products?category=cleaning">
-                <div className="category-card" style={{ background: 'linear-gradient(135deg, #155e75 0%, #06b6d4 100%)' }}>
+                <div className="category-card" style={{ 
+                  background: 'linear-gradient(135deg, rgba(21, 94, 117, 0.85) 0%, rgba(6, 182, 212, 0.9) 100%), url("https://images.unsplash.com/photo-1584622781564-1d987f7333c1?auto=format&fit=crop&w=600&q=80") center/cover no-repeat'
+                }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🚽</div>
                   <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Washroom Products</h3>
                   <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85rem', margin: 0 }}>Acidic scale removers, tiles cleaners, and heavy-duty washroom formulas.</p>
@@ -415,7 +427,7 @@ export default function ClientPage({ initialProducts }) {
               {/* Dirty / Before Image (Backdrop) */}
               <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}>
                 <img 
-                  src="https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&q=80&w=1200" 
+                  src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=1200" 
                   alt="Workspace Before Cleaning" 
                   style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'sepia(0.65) brightness(0.6) contrast(0.85) saturate(0.7)' }} 
                 />
@@ -437,7 +449,7 @@ export default function ClientPage({ initialProducts }) {
                 borderRight: '2px solid white'
               }}>
                 <img 
-                  src="https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&q=80&w=1200" 
+                  src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=1200" 
                   alt="Workspace After Cleaning" 
                   style={{ 
                     width: '100vw', 

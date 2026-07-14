@@ -20,6 +20,24 @@ export function useProducts() {
           id: doc.id,
           source: 'firestore'
         }));
+
+        // Sort: products with images first, products without images last
+        const isActualImage = (img) => {
+          if (!img || typeof img !== 'string') return false;
+          const trimmed = img.trim();
+          if (trimmed === '') return false;
+          if (trimmed === '/PRODUCTS%20/Neat/neat-all-purpose-floral-2l.png') return false;
+          return true;
+        };
+
+        loadedProducts.sort((a, b) => {
+          const aHasImage = isActualImage(a.image);
+          const bHasImage = isActualImage(b.image);
+          if (aHasImage && !bHasImage) return -1;
+          if (!aHasImage && bHasImage) return 1;
+          return 0;
+        });
+
         setFirestoreProducts(loadedProducts);
       } else {
         setFirestoreProducts([]);
