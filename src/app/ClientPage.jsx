@@ -282,7 +282,7 @@ export default function ClientPage({ initialProducts }) {
               {/* Category cards list */}
               <Link href="/products?category=industrial cleaners">
                 <div className="category-card" style={{ 
-                  background: 'linear-gradient(135deg, rgba(11, 35, 57, 0.85) 0%, rgba(21, 62, 99, 0.9) 100%), url("https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=600&q=80") center/cover no-repeat'
+                  background: 'linear-gradient(135deg, rgba(11, 35, 57, 0.85) 0%, rgba(21, 62, 99, 0.9) 100%), url("/images/categories/industrial.png") center/cover no-repeat'
                 }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🧪</div>
                   <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Industrial Cleaners</h3>
@@ -292,7 +292,7 @@ export default function ClientPage({ initialProducts }) {
 
               <Link href="/disinfectants-ghana">
                 <div className="category-card" style={{ 
-                  background: 'linear-gradient(135deg, rgba(30, 58, 138, 0.85) 0%, rgba(59, 130, 246, 0.9) 100%), url("https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80") center/cover no-repeat'
+                  background: 'linear-gradient(135deg, rgba(30, 58, 138, 0.85) 0%, rgba(59, 130, 246, 0.9) 100%), url("/images/categories/disinfectants.png") center/cover no-repeat'
                 }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🛡️</div>
                   <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Disinfectants</h3>
@@ -302,7 +302,7 @@ export default function ClientPage({ initialProducts }) {
 
               <Link href="/products?category=hygiene products">
                 <div className="category-card" style={{ 
-                  background: 'linear-gradient(135deg, rgba(15, 118, 110, 0.85) 0%, rgba(20, 184, 166, 0.9) 100%), url("https://images.unsplash.com/photo-1608222351212-18fe0ec7b13b?auto=format&fit=crop&w=600&q=80") center/cover no-repeat'
+                  background: 'linear-gradient(135deg, rgba(15, 118, 110, 0.85) 0%, rgba(20, 184, 166, 0.9) 100%), url("/images/categories/sanitizers.png") center/cover no-repeat'
                 }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>✨</div>
                   <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Sanitizers</h3>
@@ -312,7 +312,7 @@ export default function ClientPage({ initialProducts }) {
 
               <Link href="/products?category=cleaning">
                 <div className="category-card" style={{ 
-                  background: 'linear-gradient(135deg, rgba(71, 85, 105, 0.85) 0%, rgba(100, 116, 139, 0.9) 100%), url("https://images.unsplash.com/photo-1517677129300-07b130802f46?auto=format&fit=crop&w=600&q=80") center/cover no-repeat'
+                  background: 'linear-gradient(135deg, rgba(71, 85, 105, 0.85) 0%, rgba(100, 116, 139, 0.9) 100%), url("/images/categories/laundry.png") center/cover no-repeat'
                 }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🧺</div>
                   <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Laundry</h3>
@@ -322,7 +322,7 @@ export default function ClientPage({ initialProducts }) {
 
               <Link href="/products?category=hygiene products">
                 <div className="category-card" style={{ 
-                  background: 'linear-gradient(135deg, rgba(3, 105, 161, 0.85) 0%, rgba(14, 165, 233, 0.9) 100%), url("https://images.unsplash.com/photo-1602928321679-560bb453f190?auto=format&fit=crop&w=600&q=80") center/cover no-repeat'
+                  background: 'linear-gradient(135deg, rgba(3, 105, 161, 0.85) 0%, rgba(14, 165, 233, 0.9) 100%), url("/images/categories/air-fresheners.png") center/cover no-repeat'
                 }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🌬️</div>
                   <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Air Fresheners</h3>
@@ -332,7 +332,7 @@ export default function ClientPage({ initialProducts }) {
 
               <Link href="/products?category=cleaning">
                 <div className="category-card" style={{ 
-                  background: 'linear-gradient(135deg, rgba(21, 94, 117, 0.85) 0%, rgba(6, 182, 212, 0.9) 100%), url("https://images.unsplash.com/photo-1584622781564-1d987f7333c1?auto=format&fit=crop&w=600&q=80") center/cover no-repeat'
+                  background: 'linear-gradient(135deg, rgba(21, 94, 117, 0.85) 0%, rgba(6, 182, 212, 0.9) 100%), url("/images/categories/washroom.png") center/cover no-repeat'
                 }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🚽</div>
                   <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Washroom Products</h3>
