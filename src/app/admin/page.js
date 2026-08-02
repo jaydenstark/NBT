@@ -1,3 +1,4 @@
+/* global process */
 'use client';
 
 import { useState, useRef, useEffect, Fragment } from 'react';
@@ -1646,8 +1647,8 @@ Thank you! 🧪🛡️`;
   // Load Cloudinary config from localStorage on clientside load
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const cloud = localStorage.getItem('nbt_cloudinary_cloud') || '';
-      const preset = localStorage.getItem('nbt_cloudinary_preset') || '';
+      const cloud = localStorage.getItem('nbt_cloudinary_cloud') || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD || '';
+      const preset = localStorage.getItem('nbt_cloudinary_preset') || process.env.NEXT_PUBLIC_CLOUDINARY_PRESET || '';
       const num = localStorage.getItem('nbt_whatsapp_num') || '0246272115';
       setTimeout(() => {
         setCloudinaryCloud(cloud);
