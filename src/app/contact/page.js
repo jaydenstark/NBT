@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { collection, addDoc, serverTimestamp, db } from '../../lib/firebase';
 import Navbar from '../../components/layout/Navbar';
 import Cart from '../../components/shop/Cart';
 import FloatingContact from '../../components/layout/FloatingContact';

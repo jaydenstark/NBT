@@ -1,54 +1,72 @@
 import { useState, useEffect } from 'react';
-import { auth, db } from '../lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { supabase } from '../lib/supabase';
 
 export function useAuthUser() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        // Fetch or listen to the Firestore user document
-        const userRef = doc(db, 'users', firebaseUser.uid);
-        
-        // Use onSnapshot to keep user role/tier real-time
-        const unsubscribeDoc = onSnapshot(userRef, (docSnap) => {
-          if (docSnap.exists()) {
-            setUser({
-              uid: firebaseUser.uid,
-              email: firebaseUser.email,
-              ...docSnap.data()
-            });
-          } else {
-            // Document doesn't exist yet, we only have basic auth data
-            setUser({
-              uid: firebaseUser.uid,
-              email: firebaseUser.email,
-              role: 'buyer' // Default fallback
-            });
-          }
-          setLoading(false);
-        }, (error) => {
-          console.error("Firestore onSnapshot Error:", error);
-          // If we fail to fetch user data (e.g. permissions), just fallback to basic auth so the UI unblocks
+    const fetchUserProfile = async (supabaseUser) => {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', supabaseUser.id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error("Error fetching user profile:", error);
+        }
+
+        if (data) {
           setUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
+            uid: supabaseUser.id,
+            email: supabaseUser.email,
+            ...data
+          });
+        } else {
+          setUser({
+            uid: supabaseUser.id,
+            email: supabaseUser.email,
             role: 'buyer'
           });
-          setLoading(false);
-        });
+        }
+      } catch (err) {
+        console.error("Profile fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-        return () => unsubscribeDoc();
+    const getInitialSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          await fetchUserProfile(session.user);
+        } else {
+          setUser(null);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Error getting initial session:", error);
+        setLoading(false);
+      }
+    };
+
+    getInitialSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        await fetchUserProfile(session.user);
       } else {
         setUser(null);
         setLoading(false);
       }
     });
 
-    return () => unsubscribeAuth();
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   return { user, loading, isAuthenticated: !!user };

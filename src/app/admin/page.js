@@ -3,9 +3,7 @@
 import { useState, useRef, useEffect, Fragment } from 'react';
 import { useProducts } from '../../hooks/useProducts';
 import * as XLSX from 'xlsx';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage, db } from '../../lib/firebase';
-import { collection, onSnapshot, updateDoc, doc, deleteDoc, addDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, storage, db, collection, onSnapshot, updateDoc, doc, deleteDoc, addDoc } from '../../lib/firebase';
 import InvoiceModal from '../../components/shop/InvoiceModal';
 
 // Helper for B2B discount code generation

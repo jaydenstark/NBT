@@ -8,8 +8,7 @@ import FloatingContact from '../../components/layout/FloatingContact';
 import { useCart } from '../../hooks/useCart';
 import InvoiceModal from '../../components/shop/InvoiceModal';
 import { useAuthUser } from '../../hooks/useAuthUser';
-import { auth } from '../../lib/firebase';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { supabase } from '../../lib/supabase';
 import { userService } from '../../services/db';
 
 export default function AccountPage() {
@@ -197,11 +196,18 @@ export default function AccountPage() {
           throw new Error('Invalid OTP Code. Please use 1234 for testing.');
         }
 
-        // Create Firebase Auth user
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        // Create Supabase Auth user
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password
+        });
         
-        // Save structured B2B profile to Firestore
-        await userService.createUserProfile(userCredential.user.uid, {
+        if (signUpError) throw signUpError;
+        const user = signUpData.user;
+        if (!user) throw new Error('Failed to create account.');
+
+        // Save structured B2B profile to database
+        await userService.createUserProfile(user.id, {
           fullName,
           email,
           phone,
@@ -220,14 +226,18 @@ export default function AccountPage() {
           throw new Error('Please provide both email and password.');
         }
         // Log in
-        await signInWithEmailAndPassword(auth, email, password);
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+        if (signInError) throw signInError;
       }
     } catch (err) {
       console.error("Auth Error:", err);
-      // Format Firebase errors slightly better
-      if (err.code === 'auth/email-already-in-use') {
+      // Format auth errors slightly better
+      if (err.message?.includes('already exists') || err.message?.includes('already registered')) {
         setAuthError('An account with this email already exists. Please log in.');
-      } else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+      } else if (err.message?.includes('Invalid login credentials') || err.message?.includes('invalid-credential')) {
         setAuthError('Invalid email or password.');
       } else {
         setAuthError(err.message || 'Authentication failed. Please check your inputs and try again.');
@@ -240,7 +250,8 @@ export default function AccountPage() {
   // Sign out corporate user
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       setAuthMode('login');
     } catch (error) {
       console.error('Error signing out', error);

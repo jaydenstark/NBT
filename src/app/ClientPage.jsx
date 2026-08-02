@@ -34,6 +34,118 @@ const testimonials = [
   }
 ];
 
+const categories = [
+  {
+    title: "Industrial Cleaners",
+    description: "High-concentration chemical solutions for industrial output and factories.",
+    href: "/products?category=industrial cleaners",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+      </svg>
+    )
+  },
+  {
+    title: "Disinfectants",
+    description: "Medical grade sanitizers and chemical disinfectants for clinical protection.",
+    href: "/disinfectants-ghana",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+      </svg>
+    )
+  },
+  {
+    title: "Sanitizers",
+    description: "Personal and general-use hand sanitizers, washes, and skin soaps.",
+    href: "/products?category=hygiene products",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547" />
+      </svg>
+    )
+  },
+  {
+    title: "Laundry Products",
+    description: "Concentrated fabric softeners, washing powders, and liquid detergents.",
+    href: "/products?category=cleaning",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>
+    )
+  },
+  {
+    title: "Air Fresheners",
+    description: "Long-lasting mist sprays and neutralizers to eliminate harsh odors.",
+    href: "/products?category=hygiene products",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+      </svg>
+    )
+  },
+  {
+    title: "Washroom Products",
+    description: "Acidic scale removers, tiles cleaners, and heavy-duty washroom formulas.",
+    href: "/products?category=cleaning",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547" />
+      </svg>
+    )
+  }
+];
+
+const benefits = [
+  {
+    title: "High Quality",
+    description: "Our chemical compositions guarantee exact active ratios, tested continuously for ultimate cleaning and hygiene power.",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+      </svg>
+    )
+  },
+  {
+    title: "Fast Delivery",
+    description: "We coordinate continuous nationwide logistics across Ghana to supply businesses, hospitals, and homes quickly.",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+    )
+  },
+  {
+    title: "Safe Products",
+    description: "Certified non-toxic and food-grade safety standard chemicals that sanitize thoroughly without destroying surfaces.",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+      </svg>
+    )
+  },
+  {
+    title: "Bulk Supply",
+    description: "Accommodating small wholesale supplies from 5 Liters up to 1,000 Liter customizable manufacturing shipments.",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>
+    )
+  },
+  {
+    title: "Customer Support",
+    description: "Speak directly with our chemists or support staff at any time for customized safety data sheets and ratio calculations.",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 014.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+      </svg>
+    )
+  }
+];
+
+
 export default function ClientPage({ initialProducts }) {
   const { products, isLoaded } = useProducts(initialProducts);
   const { cartItems, isCartOpen, setIsCartOpen, addToCart, removeFromCart, clearCart, toastMessage, setToastMessage } = useCart();
@@ -258,18 +370,17 @@ export default function ClientPage({ initialProducts }) {
             )}
           </div>
         </section>
-
         {/* 5. SHOP BY CATEGORY */}
-        <section id="section-categories" className="section" style={{ background: '#f1f5f9', padding: '95px 0', borderTop: '1px solid var(--border)' }}>
+        <section id="section-categories" className="section" style={{ background: 'var(--bg-surface)', padding: '95px 0', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-              <span style={{ color: 'var(--secondary)', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '2px' }}>
+              <span style={{ color: 'var(--secondary)', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '2.5px', background: 'rgba(21, 109, 107, 0.08)', padding: '6px 16px', borderRadius: '30px' }}>
                 Smart Classification
               </span>
-              <h2 style={{ fontSize: 'clamp(2rem, 4vw, 2.75rem)', marginTop: '0.5rem', fontWeight: 800, color: 'var(--primary)' }}>
+              <h2 style={{ fontSize: 'clamp(2rem, 4vw, 2.75rem)', marginTop: '0.85rem', fontWeight: 800, color: 'var(--primary)' }}>
                 Shop By Category
               </h2>
-              <p style={{ color: 'var(--text-muted)', maxWidth: '600px', margin: '12px auto 0', fontSize: '1.05rem' }}>
+              <p style={{ color: 'var(--text-muted)', maxWidth: '600px', margin: '14px auto 0', fontSize: '1.05rem', lineHeight: 1.6 }}>
                 Filter our complete industrial and retail chemical inventory by precise operational use.
               </p>
             </div>
@@ -279,66 +390,44 @@ export default function ClientPage({ initialProducts }) {
               gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
               gap: '2rem'
             }}>
-              {/* Category cards list */}
-              <Link href="/products?category=industrial cleaners">
-                <div className="category-card" style={{ 
-                  background: 'linear-gradient(135deg, rgba(11, 35, 57, 0.85) 0%, rgba(21, 62, 99, 0.9) 100%), url("/images/categories/industrial.png") center/cover no-repeat'
-                }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🧪</div>
-                  <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Industrial Cleaners</h3>
-                  <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85rem', margin: 0 }}>High-concentration chemical solutions for industrial output and factories.</p>
-                </div>
-              </Link>
-
-              <Link href="/disinfectants-ghana">
-                <div className="category-card" style={{ 
-                  background: 'linear-gradient(135deg, rgba(30, 58, 138, 0.85) 0%, rgba(59, 130, 246, 0.9) 100%), url("/images/categories/disinfectants.png") center/cover no-repeat'
-                }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🛡️</div>
-                  <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Disinfectants</h3>
-                  <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85rem', margin: 0 }}>Medical grade sanitizers and chemical disinfectants for clinical protection.</p>
-                </div>
-              </Link>
-
-              <Link href="/products?category=hygiene products">
-                <div className="category-card" style={{ 
-                  background: 'linear-gradient(135deg, rgba(15, 118, 110, 0.85) 0%, rgba(20, 184, 166, 0.9) 100%), url("/images/categories/sanitizers.png") center/cover no-repeat'
-                }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>✨</div>
-                  <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Sanitizers</h3>
-                  <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85rem', margin: 0 }}>Personal and general-use hand sanitizers, washes, and skin soaps.</p>
-                </div>
-              </Link>
-
-              <Link href="/products?category=cleaning">
-                <div className="category-card" style={{ 
-                  background: 'linear-gradient(135deg, rgba(71, 85, 105, 0.85) 0%, rgba(100, 116, 139, 0.9) 100%), url("/images/categories/laundry.png") center/cover no-repeat'
-                }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🧺</div>
-                  <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Laundry</h3>
-                  <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85rem', margin: 0 }}>Concentrated fabric softeners, washing powders, and liquid detergents.</p>
-                </div>
-              </Link>
-
-              <Link href="/products?category=hygiene products">
-                <div className="category-card" style={{ 
-                  background: 'linear-gradient(135deg, rgba(3, 105, 161, 0.85) 0%, rgba(14, 165, 233, 0.9) 100%), url("/images/categories/air-fresheners.png") center/cover no-repeat'
-                }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🌬️</div>
-                  <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Air Fresheners</h3>
-                  <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85rem', margin: 0 }}>Long-lasting mist sprays and neutralizers to eliminate harsh odors.</p>
-                </div>
-              </Link>
-
-              <Link href="/products?category=cleaning">
-                <div className="category-card" style={{ 
-                  background: 'linear-gradient(135deg, rgba(21, 94, 117, 0.85) 0%, rgba(6, 182, 212, 0.9) 100%), url("/images/categories/washroom.png") center/cover no-repeat'
-                }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🚽</div>
-                  <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 700, marginBottom: '6px' }}>Washroom Products</h3>
-                  <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85rem', margin: 0 }}>Acidic scale removers, tiles cleaners, and heavy-duty washroom formulas.</p>
-                </div>
-              </Link>
+              {categories.map((cat, idx) => (
+                <Link href={cat.href} key={idx} style={{ textDecoration: 'none' }}>
+                  <div className="category-card-premium" style={{ 
+                    background: 'white',
+                    padding: '36px 30px',
+                    borderRadius: '20px',
+                    border: '1.5px solid rgba(21, 109, 107, 0.12)',
+                    boxShadow: 'var(--shadow-sm)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    cursor: 'pointer',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start'
+                  }}>
+                    <div className="icon-badge" style={{ 
+                      width: '56px',
+                      height: '56px',
+                      borderRadius: '16px',
+                      background: 'rgba(21, 109, 107, 0.06)',
+                      color: 'var(--secondary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: '1.5rem',
+                      transition: 'all 0.3s ease'
+                    }}>
+                      {cat.icon}
+                    </div>
+                    <h3 style={{ fontSize: '1.3rem', color: 'var(--primary)', fontWeight: 800, marginBottom: '10px' }}>
+                      {cat.title}
+                    </h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', margin: 0, lineHeight: 1.6 }}>
+                      {cat.description}
+                    </p>
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
         </section>
@@ -347,65 +436,80 @@ export default function ClientPage({ initialProducts }) {
         <section id="section-why-nbt" className="section" style={{ background: '#ffffff', padding: '95px 0' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: '4.5rem' }}>
-              <span style={{ color: 'var(--secondary)', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '2px' }}>
+              <span style={{ color: 'var(--secondary)', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '2.5px', background: 'rgba(21, 109, 107, 0.08)', padding: '6px 16px', borderRadius: '30px' }}>
                 Operational Excellence
               </span>
-              <h2 style={{ fontSize: 'clamp(2rem, 4vw, 2.75rem)', marginTop: '0.5rem', fontWeight: 800, color: 'var(--primary)' }}>
+              <h2 style={{ fontSize: 'clamp(2rem, 4vw, 2.75rem)', marginTop: '0.85rem', fontWeight: 800, color: 'var(--primary)' }}>
                 Why Choose NBT
               </h2>
-              <p style={{ color: 'var(--text-muted)', maxWidth: '600px', margin: '12px auto 0', fontSize: '1.05rem' }}>
+              <p style={{ color: 'var(--text-muted)', maxWidth: '600px', margin: '14px auto 0', fontSize: '1.05rem', lineHeight: 1.6 }}>
                 Your trusted partner in quality compliance, active concentrations, and country-wide distribution.
               </p>
             </div>
 
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: '2rem'
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+              gap: '2.25rem'
             }}>
-              <div className="benefit-card">
-                <div style={{ fontSize: '2.2rem', color: 'var(--secondary)', marginBottom: '12px' }}>🏆</div>
-                <h3 style={{ fontSize: '1.15rem', color: 'var(--primary)', fontWeight: 700, marginBottom: '8px' }}>High Quality</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
-                  Our chemical compositions guarantee exact active ratios, tested continuously for ultimate cleaning and hygiene power.
-                </p>
-              </div>
-
-              <div className="benefit-card">
-                <div style={{ fontSize: '2.2rem', color: 'var(--secondary)', marginBottom: '12px' }}>⚡</div>
-                <h3 style={{ fontSize: '1.15rem', color: 'var(--primary)', fontWeight: 700, marginBottom: '8px' }}>Fast Delivery</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
-                  We coordinate continuous nationwide logistics across Ghana to supply businesses, hospitals, and homes quickly.
-                </p>
-              </div>
-
-              <div className="benefit-card">
-                <div style={{ fontSize: '2.2rem', color: 'var(--secondary)', marginBottom: '12px' }}>🛡️</div>
-                <h3 style={{ fontSize: '1.15rem', color: 'var(--primary)', fontWeight: 700, marginBottom: '8px' }}>Safe Products</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
-                  Certified non-toxic and food-grade safety standard chemicals that sanitize thoroughly without destroying surfaces.
-                </p>
-              </div>
-
-              <div className="benefit-card">
-                <div style={{ fontSize: '2.2rem', color: 'var(--secondary)', marginBottom: '12px' }}>📦</div>
-                <h3 style={{ fontSize: '1.15rem', color: 'var(--primary)', fontWeight: 700, marginBottom: '8px' }}>Bulk Supply</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
-                  Accommodating small wholesale supplies from 5 Liters up to 1,000 Liter customizable manufacturing shipments.
-                </p>
-              </div>
-
-              <div className="benefit-card">
-                <div style={{ fontSize: '2.2rem', color: 'var(--secondary)', marginBottom: '12px' }}>📞</div>
-                <h3 style={{ fontSize: '1.15rem', color: 'var(--primary)', fontWeight: 700, marginBottom: '8px' }}>Customer Support</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
-                  Speak directly with our chemists or support staff at any time for customized safety data sheets and ratio calculations.
-                </p>
-              </div>
+              {benefits.map((benefit, idx) => (
+                <div key={idx} className="benefit-card-premium" style={{
+                  background: 'white',
+                  padding: '36px 28px',
+                  borderRadius: '20px',
+                  border: '1.5px solid rgba(10, 34, 64, 0.06)',
+                  boxShadow: 'var(--shadow-sm)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start'
+                }}>
+                  <div className="icon-badge-secondary" style={{ 
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '50%',
+                    background: 'rgba(21, 109, 107, 0.06)',
+                    color: 'var(--secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '1.25rem',
+                    transition: 'all 0.3s ease'
+                  }}>
+                    {benefit.icon}
+                  </div>
+                  <h3 style={{ fontSize: '1.15rem', color: 'var(--primary)', fontWeight: 800, marginBottom: '10px' }}>
+                    {benefit.title}
+                  </h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', margin: 0, lineHeight: 1.65 }}>
+                    {benefit.description}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
+        <style>{`
+          .category-card-premium:hover {
+            transform: translateY(-6px);
+            border-color: var(--secondary) !important;
+            box-shadow: 0 15px 30px rgba(21, 109, 107, 0.12) !important;
+          }
+          .category-card-premium:hover .icon-badge {
+            background: var(--secondary) !important;
+            color: white !important;
+          }
+          .benefit-card-premium:hover {
+            transform: translateY(-6px);
+            border-color: var(--secondary) !important;
+            box-shadow: 0 15px 30px rgba(21, 109, 107, 0.12) !important;
+          }
+          .benefit-card-premium:hover .icon-badge-secondary {
+            background: var(--secondary) !important;
+            color: white !important;
+          }
+        `}</style>
         {/* 7. BEFORE / AFTER COMPARISON SLIDER */}
         <section id="section-transformations" className="section" style={{ background: '#f8fafc', padding: '95px 0', borderTop: '1px solid var(--border)' }}>
           <div className="container">

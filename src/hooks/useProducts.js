@@ -1,26 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../lib/supabase';
 
 export function useProducts() {
-  const [firestoreProducts, setFirestoreProducts] = useState([]);
+  const [products, setProducts] = useState([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  useEffect(() => {
-    // Reference to the 'products' collection in Firestore
-    const productsRef = collection(db, 'products');
+  const fetchProducts = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*');
 
-    // Real-time listener for products
-    const unsubscribe = onSnapshot(productsRef, async (snapshot) => {
-      if (!snapshot.empty) {
-        const loadedProducts = snapshot.docs.map(doc => ({
-          ...doc.data(),
-          id: doc.id,
-          source: 'firestore'
-        }));
+      if (error) throw error;
 
+      if (data) {
         // Sort: products with images first, products without images last
         const isActualImage = (img) => {
           if (!img || typeof img !== 'string') return false;
@@ -30,7 +25,7 @@ export function useProducts() {
           return true;
         };
 
-        loadedProducts.sort((a, b) => {
+        const sorted = [...data].sort((a, b) => {
           const aHasImage = isActualImage(a.image);
           const bHasImage = isActualImage(b.image);
           if (aHasImage && !bHasImage) return -1;
@@ -38,28 +33,44 @@ export function useProducts() {
           return 0;
         });
 
-        setFirestoreProducts(loadedProducts);
-      } else {
-        setFirestoreProducts([]);
+        setProducts(sorted);
       }
+    } catch (error) {
+      console.error("Error fetching products from Supabase:", error);
+    } finally {
       setIsLoaded(true);
-    }, (error) => {
-      console.error("Error fetching products from Firestore:", error);
-      setIsLoaded(true);
-    });
-
-    return () => unsubscribe();
+    }
   }, []);
 
-  const products = firestoreProducts;
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchProducts();
+
+    // Set up real-time listener for updates
+    const channel = supabase
+      .channel('public-products-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'products' },
+        () => {
+          fetchProducts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchProducts]);
 
   const addProduct = async (product) => {
     try {
-      const productsRef = collection(db, 'products');
-      // Remove any existing id so Firestore generates a new unique one
       // eslint-disable-next-line no-unused-vars
-      const { id, ...productData } = product;
-      await addDoc(productsRef, productData);
+      const { id: _, ...productData } = product;
+      const { error } = await supabase
+        .from('products')
+        .insert([productData]);
+      if (error) throw error;
     } catch (error) {
       console.error("Error adding product: ", error);
     }
@@ -67,8 +78,12 @@ export function useProducts() {
 
   const updateProduct = async (updatedProduct) => {
     try {
-      const docRef = doc(db, 'products', updatedProduct.id.toString());
-      await updateDoc(docRef, updatedProduct);
+      const { id, ...productData } = updatedProduct;
+      const { error } = await supabase
+        .from('products')
+        .update(productData)
+        .eq('id', id);
+      if (error) throw error;
     } catch (error) {
       console.error("Error updating product: ", error);
     }
@@ -76,8 +91,11 @@ export function useProducts() {
 
   const deleteProduct = async (id) => {
     try {
-      const docRef = doc(db, 'products', id.toString());
-      await deleteDoc(docRef);
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
     } catch (error) {
       console.error("Error deleting product: ", error);
     }

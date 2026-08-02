@@ -582,13 +582,13 @@ function ProductsContent({ initialProducts }) {
             </div>
 
             <h1 style={{ 
-              fontSize: '2rem', 
+              fontSize: '2.25rem', 
               fontWeight: 800,
               color: '#111827',
               margin: '0',
               letterSpacing: '-0.5px'
             }}>
-              Home & Kitchen Essentials
+              {selectedCategories.length > 0 ? selectedCategories[0] : "Chemical & Hygiene Catalog"}
             </h1>
           </div>
         </section>

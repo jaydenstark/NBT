@@ -495,6 +495,9 @@ const Navbar = ({ cartCount, onCartClick }) => {
             display: flex !important;
             align-items: center;
           }
+          .mobile-bottom-nav {
+            display: none !important;
+          }
 
           /* Responsive adjustments for mid-sized screens (tablets/laptops 1024px to 1200px) */
           @media (max-width: 1200px) and (min-width: 1025px) {
@@ -525,6 +528,23 @@ const Navbar = ({ cartCount, onCartClick }) => {
             }
             .mobile-hide {
               display: none !important;
+            }
+          }
+          @media (max-width: 950px) {
+            .mobile-bottom-nav {
+              display: flex !important;
+              position: fixed;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              height: 65px;
+              background: white;
+              border-top: 1px solid var(--border);
+              z-index: 9000;
+              box-shadow: 0 -4px 10px rgba(0,0,0,0.03);
+              justify-content: space-around;
+              align-items: center;
+              padding-bottom: env(safe-area-inset-bottom, 0px);
             }
           }
         `}</style>

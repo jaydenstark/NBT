@@ -1,19 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
 :root {
-  --primary: #0B2339;
-  --secondary: #2B8C8A;
-  --accent: #33A19D;
+  --primary: #0A2240;
+  --secondary: #156D6B;
+  --accent: #1D7674;
   --bg-main: #FFFFFF;
-  --bg-surface: #F4F7F9;
-  --text-main: #0B2339;
-  --text-muted: #546E7A;
+  --bg-surface: #F8FAFC;
+  --text-main: #0A2240;
+  --text-muted: #64748B;
   --white: #FFFFFF;
-  --shadow-sm: 0 2px 4px rgba(11, 35, 57, 0.05);
-  --shadow-md: 0 10px 20px rgba(11, 35, 57, 0.1);
+  --shadow-sm: 0 4px 10px rgba(10, 34, 64, 0.04);
+  --shadow-md: 0 12px 30px rgba(10, 34, 64, 0.08);
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --glass: rgba(255, 255, 255, 0.8);
-  --border: #ECEFF1;
+  --glass: rgba(255, 255, 255, 0.82);
+  --border: #E2E8F0;
 }
 
 * {
@@ -666,3 +666,94 @@ ul {
     font-size: 1.15rem;
   }
 }
+
+/* ========================================= */
+/*       PREMIUM B2B UX/UI STYLE RULES       */
+/* ========================================= */
+
+/* Sleek Slim B2B Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 20px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary);
+}
+
+/* Benefit & Category Cards Interactive Upgrades */
+.benefit-card {
+  background: white;
+  padding: 30px 24px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+}
+.benefit-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 25px -5px rgba(43, 140, 138, 0.1), 0 10px 10px -5px rgba(43, 140, 138, 0.04);
+  border-color: rgba(43, 140, 138, 0.3);
+}
+
+.category-card {
+  padding: 40px 30px;
+  border-radius: 20px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+.category-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 20px 30px rgba(11, 35, 57, 0.15);
+}
+
+/* Input Fields Focus Animations */
+input[type="text"], input[type="tel"], input[type="email"], input[type="number"], select, textarea {
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+input[type="text"]:focus, input[type="tel"]:focus, input[type="email"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
+  border-color: var(--secondary) !important;
+  box-shadow: 0 0 0 3px rgba(43, 140, 138, 0.15) !important;
+}
+
+/* Tab Pills Styling */
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(43, 140, 138, 0.08);
+  color: var(--secondary);
+  border: 1px solid rgba(43, 140, 138, 0.2);
+  padding: 6px 14px;
+  borderRadius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+.filter-pill button {
+  background: none;
+  border: none;
+  font-weight: 800;
+  color: var(--secondary);
+  cursor: pointer;
+  padding: 0;
+  margin-left: 2px;
+}
+.filter-pill:hover {
+  background: rgba(43, 140, 138, 0.15);
+}
+
