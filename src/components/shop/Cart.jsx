@@ -1,7 +1,24 @@
+/* global process */
 'use client';
 import { useState } from 'react';
 import { collection, addDoc, serverTimestamp, db } from '../../lib/firebase';
 import { useAuthUser } from '../../hooks/useAuthUser';
+
+const generatePaymentRef = () => 'NBT-' + Math.floor((Math.random() * 100000000) + 1);
+
+const loadScript = (src) => {
+  return new Promise((resolve) => {
+    if (document.querySelector(`script[src="${src}"]`)) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 const Cart = ({ isOpen, onClose, cartItems, onRemove, onClearCart }) => {
   const [isCheckout, setIsCheckout] = useState(false);
@@ -10,6 +27,7 @@ const Cart = ({ isOpen, onClose, cartItems, onRemove, onClearCart }) => {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
+    email: '',
     address: '',
     companyRef: '',
     deliveryDate: '',
@@ -23,13 +41,13 @@ const Cart = ({ isOpen, onClose, cartItems, onRemove, onClearCart }) => {
 
   if (!isOpen) return null;
 
-  // Initialize fields if user is authenticated
   const initCheckoutForm = () => {
     if (activeUser) {
       setFormData(prev => ({
         ...prev,
         name: activeUser.company || activeUser.fullName || activeUser.email || prev.name,
         phone: activeUser.phone || prev.phone,
+        email: activeUser.email || prev.email,
         address: activeUser.location || activeUser.address || prev.address
       }));
     }
@@ -40,91 +58,136 @@ const Cart = ({ isOpen, onClose, cartItems, onRemove, onClearCart }) => {
     if (cartItems.length === 0) return;
     setIsSubmitting(true);
 
-    try {
-      // 1. Save Order to Firestore
-      const orderData = {
-        customer: {
-          name: customerData.name,
-          phone: customerData.phone,
-          address: customerData.address,
-          companyRef: customerData.companyRef || '',
-          deliveryDate: customerData.deliveryDate || '',
-          paymentMethod: customerData.paymentMethod || 'Pay Now',
-          notes: customerData.notes || '',
-          poNumber: customerData.poNumber || '',
-          poFileName: customerData.poFileName || ''
-        },
-        items: cartItems,
-        totalAmount: total,
-        status: 'pending',
-        createdAt: serverTimestamp()
-      };
-      
-      const ordersRef = collection(db, 'orders');
-      await addDoc(ordersRef, orderData);
+    const executeOrderFinalize = async (paymentRef = null) => {
+      try {
+        // 1. Save Order to Database compatibility layer
+        const orderData = {
+          customer: {
+            name: customerData.name,
+            phone: customerData.phone,
+            email: customerData.email || '',
+            address: customerData.address,
+            companyRef: customerData.companyRef || '',
+            deliveryDate: customerData.deliveryDate || '',
+            paymentMethod: customerData.paymentMethod || 'Pay Now',
+            notes: customerData.notes || '',
+            poNumber: customerData.poNumber || '',
+            poFileName: customerData.poFileName || '',
+            paymentReference: paymentRef
+          },
+          items: cartItems,
+          totalAmount: total,
+          status: paymentRef ? 'paid' : 'pending',
+          createdAt: serverTimestamp()
+        };
+        
+        const ordersRef = collection(db, 'orders');
+        await addDoc(ordersRef, orderData);
 
-      // 2. Generate B2B WhatsApp Message
-      let message = `*New Purchase Order (My Order) from NBT B2B* 🚀\n\n`;
-      message += `*Customer Details:*\n`;
-      message += `Company/Client: ${customerData.name}\n`;
-      message += `Phone: ${customerData.phone}\n`;
-      message += `Delivery Address: ${customerData.address}\n`;
-      
-      if (customerData.companyRef) {
-        message += `Company Reference: ${customerData.companyRef}\n`;
-      }
-      if (customerData.poNumber) {
-        message += `PO Number: ${customerData.poNumber}\n`;
-      }
-      if (customerData.poFileName) {
-        message += `PO File: ${customerData.poFileName}\n`;
-      }
-      if (customerData.deliveryDate) {
-        message += `Preferred Delivery Date: ${customerData.deliveryDate}\n`;
-      }
-      message += `Payment Method: ${customerData.paymentMethod}\n`;
-      if (customerData.notes) {
-        message += `Delivery Notes: ${customerData.notes}\n`;
-      }
-      message += `\n*Order Items:*\n`;
-      
-      cartItems.forEach((item, index) => {
-        const qtyText = item.qtyInBox > 1 ? ` (${item.qtyInBox} pieces/box)` : '';
-        const lineTotal = item.price * (item.quantity || 1);
-        const sizeString = (item.size && !item.name.toLowerCase().includes(item.size.toLowerCase())) ? ` (${item.size})` : '';
-        message += `${index + 1}. ${item.quantity || 1}x ${item.name}${sizeString}${qtyText} - GH₵ ${lineTotal.toLocaleString('en-US')}\n`;
-      });
-      
-      message += `\n*Total Amount:* GH₵ ${total.toLocaleString('en-US')}`;
+        // 2. Generate B2B WhatsApp Message
+        let message = `*New Purchase Order (My Order) from NBT B2B* 🚀\n\n`;
+        message += `*Customer Details:*\n`;
+        message += `Company/Client: ${customerData.name}\n`;
+        message += `Phone: ${customerData.phone}\n`;
+        message += `Email: ${customerData.email || 'N/A'}\n`;
+        message += `Delivery Address: ${customerData.address}\n`;
+        
+        if (customerData.companyRef) {
+          message += `Company Reference: ${customerData.companyRef}\n`;
+        }
+        if (customerData.poNumber) {
+          message += `PO Number: ${customerData.poNumber}\n`;
+        }
+        if (customerData.poFileName) {
+          message += `PO File: ${customerData.poFileName}\n`;
+        }
+        if (customerData.deliveryDate) {
+          message += `Preferred Delivery Date: ${customerData.deliveryDate}\n`;
+        }
+        message += `Payment Method: ${customerData.paymentMethod}\n`;
+        if (paymentRef) {
+          message += `Paystack Payment Ref: ${paymentRef}\n`;
+          message += `Payment Status: PAID ✅\n`;
+        }
+        if (customerData.notes) {
+          message += `Delivery Notes: ${customerData.notes}\n`;
+        }
+        message += `\n*Order Items:*\n`;
+        
+        cartItems.forEach((item, index) => {
+          const qtyText = item.qtyInBox > 1 ? ` (${item.qtyInBox} pieces/box)` : '';
+          const lineTotal = item.price * (item.quantity || 1);
+          const sizeString = (item.size && !item.name.toLowerCase().includes(item.size.toLowerCase())) ? ` (${item.size})` : '';
+          message += `${index + 1}. ${item.quantity || 1}x ${item.name}${sizeString}${qtyText} - GH₵ ${lineTotal.toLocaleString('en-US')}\n`;
+        });
+        
+        message += `\n*Total Amount:* GH₵ ${total.toLocaleString('en-US')}`;
 
-      // URL Encode the message
-      const encodedMessage = encodeURIComponent(message);
-      const whatsappUrl = `https://wa.me/233246272115?text=${encodedMessage}`;
+        // URL Encode the message
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappUrl = `https://wa.me/233246272115?text=${encodedMessage}`;
 
-      // Open WhatsApp
-      window.open(whatsappUrl, '_blank');
+        // Open WhatsApp
+        window.open(whatsappUrl, '_blank');
 
-      // 3. Reset and Close
-      setIsSubmitting(false);
-      setIsCheckout(false);
-      setFormData({ 
-        name: '', 
-        phone: '', 
-        address: '', 
-        companyRef: '', 
-        deliveryDate: '', 
-        paymentMethod: 'Pay Now', 
-        notes: '',
-        poNumber: '',
-        poFileName: ''
-      });
-      if (onClearCart) onClearCart();
-      onClose();
+        // 3. Reset and Close
+        setIsSubmitting(false);
+        setIsCheckout(false);
+        setFormData({ 
+          name: '', 
+          phone: '', 
+          email: '',
+          address: '', 
+          companyRef: '', 
+          deliveryDate: '', 
+          paymentMethod: 'Pay Now', 
+          notes: '',
+          poNumber: '',
+          poFileName: ''
+        });
+        if (onClearCart) onClearCart();
+        onClose();
+      } catch (error) {
+        console.error("Error submitting order: ", error);
+        alert("Failed to process order. Please try again or contact us directly.");
+        setIsSubmitting(false);
+      }
+    };
 
-    } catch (error) {
-      console.error("Error submitting order: ", error);
-      alert("Failed to process order. Please try again or contact us directly.");
-      setIsSubmitting(false);
+    if (customerData.paymentMethod === 'Pay Now') {
+      try {
+        const loaded = await loadScript("https://js.paystack.co/v1/inline.js");
+        if (!loaded) {
+          alert("Failed to load Paystack payment gateway. Check your network or try another payment method.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_dd4d18eb8d58c8db167a57a1262d043b2354784a';
+        
+        const handler = window.PaystackPop.setup({
+          key: paystackKey,
+          email: customerData.email || 'checkout@neatbrandtrade.com',
+          amount: Math.round(total * 100), // convert to pesewas (GH₵)
+          currency: 'GHS',
+          ref: generatePaymentRef(),
+          callback: function(response) {
+            executeOrderFinalize(response.reference);
+          },
+          onClose: function() {
+            alert("Payment cancelled. You can retry checkout or choose different payment terms.");
+            setIsSubmitting(false);
+          }
+        });
+
+        handler.openIframe();
+      } catch (err) {
+        console.error("Paystack Setup Error:", err);
+        alert("An error occurred during payment gateway setup: " + err.message);
+        setIsSubmitting(false);
+      }
+    } else {
+      await executeOrderFinalize();
     }
   };
 
@@ -214,6 +277,17 @@ const Cart = ({ isOpen, onClose, cartItems, onRemove, onClearCart }) => {
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                 style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '8px' }}
                 placeholder="Golden View Hotel"
+              />
+            </div>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Contact Email</label>
+              <input 
+                type="email" 
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '8px' }}
+                placeholder="e.g. client@email.com"
               />
             </div>
             <div style={{ marginBottom: '1.5rem' }}>
