@@ -46,6 +46,7 @@ function ProductsContent({ initialProducts }) {
 
   const { products, isLoaded } = useProducts(initialProducts);
   const { cartItems, isCartOpen, setIsCartOpen, addToCart, removeFromCart, clearCart, toastMessage, setToastMessage } = useCart();
+  const cartTotal = cartItems.reduce((acc, item) => acc + (item.price * (item.quantity || 1)), 0);
 
   // Real-Time XLSX Upload live synchronization comparison tracker
   const prevProductsRef = useRef([]);
@@ -1026,6 +1027,170 @@ function ProductsContent({ initialProducts }) {
           </div>
         </div>
       </footer>
+
+      {/* Live Sticky Cart Panel (Desktop overlay & Mobile bar) */}
+      {cartItems.length > 0 && (
+        <>
+          <style dangerouslySetInnerHTML={{__html: `
+            @media (max-width: 1024px) {
+              .desktop-live-cart {
+                display: none !important;
+              }
+            }
+            @media (min-width: 1025px) {
+              .mobile-live-cart-bar {
+                display: none !important;
+              }
+            }
+            @keyframes slideInRight {
+              from {
+                transform: translateX(120%);
+                opacity: 0;
+              }
+              to {
+                transform: translateX(0);
+                opacity: 1;
+              }
+            }
+            @keyframes slideUp {
+              from {
+                transform: translateY(120%);
+                opacity: 0;
+              }
+              to {
+                transform: translateY(0);
+                opacity: 1;
+              }
+            }
+          `}} />
+
+          {/* Desktop Live Cart Panel */}
+          <div 
+            className="desktop-live-cart"
+            style={{
+              position: 'fixed',
+              top: '90px',
+              right: '24px',
+              width: '320px',
+              maxHeight: 'calc(100vh - 130px)',
+              background: 'white',
+              borderRadius: '16px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 1px 1px rgba(0, 0, 0, 0.05)',
+              border: '1px solid #e2e8f0',
+              display: 'flex',
+              flexDirection: 'column',
+              zIndex: 1000,
+              animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            }}
+          >
+            {/* Header */}
+            <div style={{ padding: '16px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--primary)', borderTopLeftRadius: '15px', borderTopRightRadius: '15px', color: 'white' }}>
+              <span style={{ fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🛒 Live Order Sheet
+              </span>
+              <span style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600 }}>
+                {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}
+              </span>
+            </div>
+
+            {/* List */}
+            <div style={{ overflowY: 'auto', flexGrow: 1, padding: '12px' }}>
+              {cartItems.map((item, idx) => (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: idx < cartItems.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
+                  <div style={{ flexGrow: 1, paddingRight: '8px' }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#1e293b' }}>
+                      {item.quantity}x {item.name}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--secondary)', fontWeight: 600 }}>
+                      Size: {item.size}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569' }}>
+                      GH₵ {(item.price * item.quantity).toLocaleString()}
+                    </span>
+                    <button 
+                      onClick={() => removeFromCart(idx)}
+                      style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px', fontSize: '1rem', lineHeight: 1 }}
+                      title="Remove item"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '16px', borderTop: '1px solid #e2e8f0', background: '#f8fafc', borderBottomLeftRadius: '15px', borderBottomRightRadius: '15px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b' }}>Total Amount</span>
+                <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#1e293b' }}>
+                  GH₵ {cartTotal.toLocaleString()}
+                </span>
+              </div>
+              <button 
+                onClick={() => setIsCartOpen(true)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'var(--primary)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s',
+                }}
+              >
+                Procure & Checkout 🚀
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile Live Cart Bar */}
+          <div 
+            className="mobile-live-cart-bar"
+            onClick={() => setIsCartOpen(true)}
+            style={{
+              position: 'fixed',
+              bottom: '20px',
+              left: '20px',
+              right: '20px',
+              background: 'var(--primary)',
+              borderRadius: '12px',
+              padding: '14px 20px',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
+              color: 'white',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              zIndex: 1000,
+              cursor: 'pointer',
+              animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1.2rem' }}>🛒</span>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>
+                  Live Cart ({cartItems.length} {cartItems.length === 1 ? 'item' : 'items'})
+                </div>
+                <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>
+                  Tap to view detailed pick list
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontWeight: 800, fontSize: '1rem' }}>
+                GH₵ {cartTotal.toLocaleString()}
+              </span>
+              <span style={{ fontSize: '0.9rem' }}>➔</span>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Cart Drawer */}
       <Cart
