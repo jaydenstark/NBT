@@ -51,13 +51,24 @@ const ProductCard = ({ product, onAddToCart, onViewDetails }) => {
           top: '10px',
           left: '10px',
           background: product.availability === 'In Stock' 
-            ? '#ef4444' 
+            ? 'rgba(16, 185, 129, 0.08)' 
             : product.availability === 'Direct Manufacture'
-              ? '#f59e0b'
-              : '#3b82f6',
-          color: 'white',
-          padding: '4px 8px',
-          borderRadius: '2px',
+              ? 'rgba(245, 158, 11, 0.08)'
+              : 'rgba(59, 130, 246, 0.08)',
+          color: product.availability === 'In Stock' 
+            ? '#047857' 
+            : product.availability === 'Direct Manufacture'
+              ? '#b45309'
+              : '#1d4ed8',
+          border: `1px solid ${
+            product.availability === 'In Stock' 
+              ? 'rgba(16, 185, 129, 0.2)' 
+              : product.availability === 'Direct Manufacture'
+                ? 'rgba(245, 158, 11, 0.2)'
+                : 'rgba(59, 130, 246, 0.2)'
+          }`,
+          padding: '4px 10px',
+          borderRadius: '20px',
           fontSize: '0.65rem',
           fontWeight: 700,
           zIndex: 5,
@@ -133,11 +144,11 @@ const ProductCard = ({ product, onAddToCart, onViewDetails }) => {
 
           {/* Pricing Row */}
           <div style={{ marginTop: '0.2rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ef4444', letterSpacing: '-0.5px' }}>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)', letterSpacing: '-0.5px' }}>
               GH₵ {currentSize?.price?.toLocaleString('en-US')}
             </div>
             {currentSize?.price < (currentSize?.price * 1.2) && (
-              <div style={{ fontSize: '0.85rem', color: '#9ca3af', textDecoration: 'line-through' }}>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
                 GH₵ {(currentSize?.price * 1.2).toLocaleString('en-US', {maximumFractionDigits:0})}
               </div>
             )}
@@ -226,7 +237,7 @@ const ProductCard = ({ product, onAddToCart, onViewDetails }) => {
             }}
             style={{
               width: '100%',
-              background: isHovered ? '#15803d' : '#16a34a', // Bright Green to drive sales
+              background: isHovered ? 'var(--accent)' : 'var(--secondary)', // Clean premium brand colors
               color: 'white',
               border: 'none',
               padding: '8px 0',
