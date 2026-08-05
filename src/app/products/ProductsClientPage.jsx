@@ -400,7 +400,7 @@ function ProductsContent({ initialProducts }) {
   const renderStars = (score) => {
     const rounded = Math.round(score);
     return (
-      <span style={{ color: '#F59E0B', display: 'inline-flex', gap: '2px', alignItems: 'center' }}>
+      <span style={{ color: '#cbd5e1', display: 'inline-flex', gap: '2px', alignItems: 'center', fontSize: '0.85rem' }}>
         {'★'.repeat(rounded)}
         {'☆'.repeat(5 - rounded)}
       </span>
@@ -502,8 +502,8 @@ function ProductsContent({ initialProducts }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {[
             { label: 'In Stock', color: '#22c55e', value: 'In Stock' },
-            { label: 'Direct Manufacture', color: '#f59e0b', value: 'Direct Manufacture' },
-            { label: 'Bulk Solutions', color: '#3b82f6', value: 'Bulk Solutions' }
+            { label: 'Direct Manufacture', color: '#94a3b8', value: 'Direct Manufacture' },
+            { label: 'Bulk Solutions', color: '#94a3b8', value: 'Bulk Solutions' }
           ].map((availOpt) => {
             const isChecked = selectedAvailabilities.includes(availOpt.value);
             return (
@@ -544,7 +544,7 @@ function ProductsContent({ initialProducts }) {
                   onChange={() => handleRatingToggle(ratingOpt.score)}
                 />
                 <span className="checkmark"></span>
-                <span style={{ color: '#F59E0B', fontSize: '0.9rem', fontWeight: isChecked ? 700 : 400, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: isChecked ? 700 : 400, display: 'flex', alignItems: 'center', gap: '4px' }}>
                   {ratingOpt.label}
                 </span>
               </label>
