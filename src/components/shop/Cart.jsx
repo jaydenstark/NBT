@@ -261,7 +261,7 @@ const Cart = ({ isOpen, onClose, cartItems, onRemove, onClearCart }) => {
               onClick={initCheckoutForm}
               disabled={cartItems.length === 0 || isSubmitting}
             >
-              Configure B2B Checkout ⚙️
+              Configure B2B Checkout ({cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}) ⚙️
             </button>
           </div>
         </>
@@ -411,7 +411,7 @@ const Cart = ({ isOpen, onClose, cartItems, onRemove, onClearCart }) => {
               style={{ padding: '15px', flex: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Processing...' : 'Submit B2B Order 💬'}
+              {isSubmitting ? 'Processing...' : `Submit B2B Order (${cartItems.length} ${cartItems.length === 1 ? 'item' : 'items'}) 💬`}
             </button>
           </div>
         </form>
