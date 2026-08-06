@@ -2,8 +2,12 @@
 
 import Navbar from '../components/layout/Navbar';
 import Hero from '../components/layout/Hero';
-import Cart from '../components/shop/Cart';
+import dynamic from 'next/dynamic';
 import Toast from '../components/ui/Toast';
+
+const Cart = dynamic(() => import('../components/shop/Cart'), {
+  ssr: false,
+});
 import FloatingContact from '../components/layout/FloatingContact';
 import { useProducts } from '../hooks/useProducts';
 import { useCart } from '../hooks/useCart';

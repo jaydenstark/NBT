@@ -3,13 +3,26 @@
 import { useSearchParams } from 'next/navigation';
 import { useState, Suspense, useMemo, useEffect, useRef } from 'react';
 import Navbar from '../../components/layout/Navbar';
-import Cart from '../../components/shop/Cart';
+import dynamic from 'next/dynamic';
 import Toast from '../../components/ui/Toast';
 import FloatingContact from '../../components/layout/FloatingContact';
 import ProductCard from '../../components/shop/ProductCard';
 import { useProducts } from '../../hooks/useProducts';
 import { useCart } from '../../hooks/useCart';
-import { CompactProcurementView, QuickOrderInterface } from '../../components/shop/ProcurementViews';
+
+const Cart = dynamic(() => import('../../components/shop/Cart'), {
+  ssr: false,
+});
+
+const CompactProcurementView = dynamic(() =>
+  import('../../components/shop/ProcurementViews').then((mod) => mod.CompactProcurementView),
+  { ssr: false, loading: () => <p style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading procurement view...</p> }
+);
+
+const QuickOrderInterface = dynamic(() =>
+  import('../../components/shop/ProcurementViews').then((mod) => mod.QuickOrderInterface),
+  { ssr: false, loading: () => <p style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading order sheet...</p> }
+);
 
 // Helper to classify size strings into Small, Medium, Large, and Industrial buckets
 const classifySize = (sizeStr) => {

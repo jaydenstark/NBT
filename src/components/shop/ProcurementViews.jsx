@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 /**
  * Helper to generate a clean deterministic SKU for B2B products.
@@ -28,25 +28,28 @@ export function CompactProcurementView({ products, onAddToCart }) {
   };
 
   // Flatten products into unique variants
-  const variants = [];
-  products.forEach(p => {
-    if (p.sizes && Array.isArray(p.sizes)) {
-      p.sizes.forEach(s => {
-        const variantId = `${p.id}_${s.size}`;
-        variants.push({
-          id: variantId,
-          product: p,
-          size: s,
-          name: p.name,
-          brand: p.brand,
-          sku: s.sku || p.sku || generateSKU(p, s.size),
-          price: s.price,
-          availability: p.availability || 'In Stock',
-          image: p.image
+  const variants = useMemo(() => {
+    const list = [];
+    products.forEach(p => {
+      if (p.sizes && Array.isArray(p.sizes)) {
+        p.sizes.forEach(s => {
+          const variantId = `${p.id}_${s.size}`;
+          list.push({
+            id: variantId,
+            product: p,
+            size: s,
+            name: p.name,
+            brand: p.brand,
+            sku: s.sku || p.sku || generateSKU(p, s.size),
+            price: s.price,
+            availability: p.availability || 'In Stock',
+            image: p.image
+          });
         });
-      });
-    }
-  });
+      }
+    });
+    return list;
+  }, [products]);
 
   return (
     <div style={{
@@ -254,32 +257,37 @@ export function QuickOrderInterface({ products, onAddToCart }) {
   const [recentAdded, setRecentAdded] = useState([]);
 
   // Flatten products for lookup
-  const variants = [];
-  products.forEach(p => {
-    if (p.sizes && Array.isArray(p.sizes)) {
-      p.sizes.forEach(s => {
-        variants.push({
-          product: p,
-          size: s,
-          name: p.name,
-          brand: p.brand,
-          sku: s.sku || p.sku || generateSKU(p, s.size),
-          price: s.price,
-          availability: p.availability || 'In Stock',
-          image: p.image
+  const variants = useMemo(() => {
+    const list = [];
+    products.forEach(p => {
+      if (p.sizes && Array.isArray(p.sizes)) {
+        p.sizes.forEach(s => {
+          list.push({
+            product: p,
+            size: s,
+            name: p.name,
+            brand: p.brand,
+            sku: s.sku || p.sku || generateSKU(p, s.size),
+            price: s.price,
+            availability: p.availability || 'In Stock',
+            image: p.image
+          });
         });
-      });
-    }
-  });
+      }
+    });
+    return list;
+  }, [products]);
 
   // Filter based on query
-  const suggestions = queryText.trim().length >= 2
-    ? variants.filter(v => 
-        v.name.toLowerCase().includes(queryText.toLowerCase()) || 
-        v.brand.toLowerCase().includes(queryText.toLowerCase()) ||
-        v.sku.toLowerCase().includes(queryText.toLowerCase())
-      ).slice(0, 6)
-    : [];
+  const suggestions = useMemo(() => {
+    const trimmed = queryText.trim().toLowerCase();
+    if (trimmed.length < 2) return [];
+    return variants.filter(v => 
+      v.name.toLowerCase().includes(trimmed) || 
+      v.brand.toLowerCase().includes(trimmed) ||
+      v.sku.toLowerCase().includes(trimmed)
+    ).slice(0, 6);
+  }, [queryText, variants]);
 
   const handleAdd = () => {
     if (!selectedVariant) return;
