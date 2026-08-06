@@ -47,8 +47,9 @@ export function useProducts() {
     fetchProducts();
 
     // Set up real-time listener for updates
+    const uniqueChannelId = `public-products-changes-${Math.random().toString(36).substring(2, 9)}`;
     const channel = supabase
-      .channel('public-products-changes')
+      .channel(uniqueChannelId)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'products' },

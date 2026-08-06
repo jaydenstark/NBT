@@ -125,8 +125,9 @@ export function onSnapshot(ref, callback, errorCallback) {
   fetchAndTrigger();
 
   // Subscribe to changes in Supabase
+  const uniqueId = Math.random().toString(36).substring(2, 9);
   const channel = supabase
-    .channel(`compat-listener-${tableName}`)
+    .channel(`compat-listener-${tableName}-${uniqueId}`)
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: tableName },
