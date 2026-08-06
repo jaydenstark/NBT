@@ -46,7 +46,8 @@ function ProductsContent({ initialProducts }) {
 
   const { products, isLoaded } = useProducts(initialProducts);
   const { cartItems, isCartOpen, setIsCartOpen, addToCart, removeFromCart, clearCart, toastMessage, setToastMessage } = useCart();
-  const cartTotal = cartItems.reduce((acc, item) => acc + (item.price * (item.quantity || 1)), 0);
+  const safeCartItems = Array.isArray(cartItems) ? cartItems.filter(Boolean) : [];
+  const cartTotal = safeCartItems.reduce((acc, item) => acc + ((item.price || 0) * (item.quantity || 1)), 0);
 
   // Real-Time XLSX Upload live synchronization comparison tracker
   const prevProductsRef = useRef([]);
@@ -1029,7 +1030,7 @@ function ProductsContent({ initialProducts }) {
       </footer>
 
       {/* Live Sticky Cart Panel (Desktop overlay & Mobile bar) */}
-      {cartItems.length > 0 && (
+      {safeCartItems.length > 0 && (
         <>
           <style dangerouslySetInnerHTML={{__html: `
             @media (max-width: 1024px) {
@@ -1089,14 +1090,14 @@ function ProductsContent({ initialProducts }) {
                 🛒 Live Order Sheet
               </span>
               <span style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600 }}>
-                {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}
+                {safeCartItems.length} {safeCartItems.length === 1 ? 'item' : 'items'}
               </span>
             </div>
 
             {/* List */}
             <div style={{ overflowY: 'auto', flexGrow: 1, padding: '12px' }}>
-              {cartItems.map((item, idx) => (
-                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: idx < cartItems.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
+              {safeCartItems.map((item, idx) => (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: idx < safeCartItems.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
                   <div style={{ flexGrow: 1, paddingRight: '8px' }}>
                     <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#1e293b' }}>
                       {item.quantity}x {item.name}
@@ -1175,7 +1176,7 @@ function ProductsContent({ initialProducts }) {
               <span style={{ fontSize: '1.2rem' }}>🛒</span>
               <div style={{ textAlign: 'left' }}>
                 <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>
-                  Live Cart ({cartItems.length} {cartItems.length === 1 ? 'item' : 'items'})
+                  Live Cart ({safeCartItems.length} {safeCartItems.length === 1 ? 'item' : 'items'})
                 </div>
                 <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>
                   Tap to view detailed pick list
@@ -1196,7 +1197,7 @@ function ProductsContent({ initialProducts }) {
       <Cart
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
-        cartItems={cartItems}
+        cartItems={safeCartItems}
         onRemove={removeFromCart}
         onClearCart={clearCart}
       />
