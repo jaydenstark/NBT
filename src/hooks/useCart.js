@@ -12,9 +12,13 @@ export function useCart() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setTimeout(() => {
-          setCartItems(parsed);
-        }, 0);
+        if (Array.isArray(parsed)) {
+          setTimeout(() => {
+            setCartItems(parsed);
+          }, 0);
+        } else {
+          localStorage.removeItem('nbt_cart');
+        }
       } catch (e) {
         console.error("Failed to parse cart items:", e);
       }

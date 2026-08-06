@@ -142,8 +142,8 @@ ul {
 }
 
 .product-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(10,34,64,0.08);
+  transform: translateY(-10px);
+  box-shadow: var(--shadow-md);
 }
 
 .product-image {
@@ -684,7 +684,7 @@ ul {
   border-radius: 20px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--secondary);
 }
 
 /* Benefit & Category Cards Interactive Upgrades */
@@ -730,31 +730,30 @@ input[type="text"]:focus, input[type="tel"]:focus, input[type="email"]:focus, in
   box-shadow: 0 0 0 3px rgba(43, 140, 138, 0.15) !important;
 }
 
-/* Filter Pills — neutral, clean */
+/* Tab Pills Styling */
 .filter-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #f1f5f9;
-  color: #374151;
-  border: 1px solid #e2e8f0;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.78rem;
-  font-weight: 600;
+  background: rgba(43, 140, 138, 0.08);
+  color: var(--secondary);
+  border: 1px solid rgba(43, 140, 138, 0.2);
+  padding: 6px 14px;
+  borderRadius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
   transition: all 0.2s;
 }
 .filter-pill button {
   background: none;
   border: none;
   font-weight: 800;
-  color: #6b7280;
+  color: var(--secondary);
   cursor: pointer;
   padding: 0;
   margin-left: 2px;
 }
 .filter-pill:hover {
-  background: #e5e7eb;
-  border-color: #d1d5db;
+  background: rgba(43, 140, 138, 0.15);
 }
 

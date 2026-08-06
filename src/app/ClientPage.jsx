@@ -277,7 +277,9 @@ export default function ClientPage({ initialProducts }) {
                 gap: '2.5rem'
               }}>
                 {bestSellers.map((product) => {
-                  const startingSize = product.sizes[0];
+                  const startingSize = (product?.sizes && product.sizes.length > 0)
+                    ? product.sizes[0]
+                    : { size: '1L', price: 0, qtyInBox: 1 };
                   return (
                     <div 
                       key={product.id}

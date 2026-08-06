@@ -72,7 +72,9 @@ const REVIEW_POOL = [
 function RelatedCard({ product, onAddToCart }) {
   const [hovered, setHovered] = useState(false);
   const ep = enrichProduct(product);
-  const startSize = product.sizes[0];
+  const startSize = (product?.sizes && product.sizes.length > 0)
+    ? product.sizes[0]
+    : { size: '1L', price: 0, qtyInBox: 1 };
   return (
     <Link
       href={`/products/${product.slug}`}
