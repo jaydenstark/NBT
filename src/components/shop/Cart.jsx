@@ -37,7 +37,8 @@ const Cart = ({ isOpen, onClose, cartItems, onRemove, onClearCart }) => {
     poFileName: ''
   });
 
-  const total = cartItems.reduce((acc, item) => acc + (item.price * (item.quantity || 1)), 0);
+  const safeCartItems = Array.isArray(cartItems) ? cartItems : [];
+  const total = safeCartItems.reduce((acc, item) => acc + (item.price * (item.quantity || 1)), 0);
 
   if (!isOpen) return null;
 
@@ -55,7 +56,7 @@ const Cart = ({ isOpen, onClose, cartItems, onRemove, onClearCart }) => {
   };
 
   const processOrder = async (customerData) => {
-    if (cartItems.length === 0) return;
+    if (safeCartItems.length === 0) return;
     setIsSubmitting(true);
 
     const executeOrderFinalize = async (paymentRef = null) => {
@@ -75,7 +76,7 @@ const Cart = ({ isOpen, onClose, cartItems, onRemove, onClearCart }) => {
             poFileName: customerData.poFileName || '',
             paymentReference: paymentRef
           },
-          items: cartItems,
+          items: safeCartItems,
           totalAmount: total,
           status: paymentRef ? 'paid' : 'pending',
           createdAt: serverTimestamp()
@@ -114,7 +115,7 @@ const Cart = ({ isOpen, onClose, cartItems, onRemove, onClearCart }) => {
         }
         message += `\n*Order Items:*\n`;
         
-        cartItems.forEach((item, index) => {
+        safeCartItems.forEach((item, index) => {
           const qtyText = item.qtyInBox > 1 ? ` (${item.qtyInBox} pieces/box)` : '';
           const lineTotal = item.price * (item.quantity || 1);
           const sizeString = (item.size && !item.name.toLowerCase().includes(item.size.toLowerCase())) ? ` (${item.size})` : '';
@@ -220,14 +221,14 @@ const Cart = ({ isOpen, onClose, cartItems, onRemove, onClearCart }) => {
       {!isCheckout ? (
         <>
           <div style={{ flexGrow: 1, overflowY: 'auto', padding: '2rem' }}>
-            {cartItems.length === 0 ? (
+            {safeCartItems.length === 0 ? (
               <div style={{ textAlign: 'center', marginTop: '4rem', color: 'var(--text-muted)' }}>
                 <span style={{ fontSize: '3rem' }}>📋</span>
                 <p style={{ marginTop: '1rem', fontWeight: 600 }}>Your order list is empty.</p>
                 <p style={{ fontSize: '0.85rem' }}>Browse products to add them to your procurement sheet.</p>
               </div>
             ) : (
-              cartItems.map((item, index) => (
+              safeCartItems.map((item, index) => (
                 <div key={index} style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <h4 style={{ margin: 0, color: 'var(--primary)' }}>{item.quantity || 1}x {item.name}</h4>
@@ -259,9 +260,9 @@ const Cart = ({ isOpen, onClose, cartItems, onRemove, onClearCart }) => {
               className="btn btn-primary" 
               style={{ width: '100%', padding: '15px' }}
               onClick={initCheckoutForm}
-              disabled={cartItems.length === 0 || isSubmitting}
+              disabled={safeCartItems.length === 0 || isSubmitting}
             >
-              Configure B2B Checkout ({cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}) ⚙️
+              Configure B2B Checkout ({safeCartItems.length} {safeCartItems.length === 1 ? 'item' : 'items'}) ⚙️
             </button>
           </div>
         </>
@@ -411,7 +412,7 @@ const Cart = ({ isOpen, onClose, cartItems, onRemove, onClearCart }) => {
               style={{ padding: '15px', flex: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Processing...' : `Submit B2B Order (${cartItems.length} ${cartItems.length === 1 ? 'item' : 'items'}) 💬`}
+              {isSubmitting ? 'Processing...' : `Submit B2B Order (${safeCartItems.length} ${safeCartItems.length === 1 ? 'item' : 'items'}) 💬`}
             </button>
           </div>
         </form>
