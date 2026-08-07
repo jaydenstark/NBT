@@ -1,4 +1,4 @@
-import ClientPage from './ClientPage';
+import ProductsClientPage from './products/ProductsClientPage';
 import Papa from 'papaparse';
 
 // Revalidate the data every 60 seconds (incremental static regeneration)
@@ -71,5 +71,5 @@ export default async function Page() {
     console.error("Failed to fetch initial products from Google Sheets:", error);
   }
 
-  return <ClientPage initialProducts={initialProducts} />;
+  return <ProductsClientPage initialProducts={initialProducts} />;
 }
