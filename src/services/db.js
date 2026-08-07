@@ -81,25 +81,27 @@ export const userService = {
       is_active: true
     };
 
-    const { error } = await supabase
-      .from('users')
-      .upsert([mapped]);
+    const dbUrl = `https://nbt-001-default-rtdb.europe-west1.firebasedatabase.app/users/${uid}.json`;
+    const response = await fetch(dbUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(mapped)
+    });
 
-    if (error) throw error;
+    if (!response.ok) {
+      throw new Error(`Failed to create user profile: ${response.statusText}`);
+    }
     return uid;
   },
 
   async getUserProfile(uid) {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', uid)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') return null; // No profile found
-      throw error;
-    }
+    const dbUrl = `https://nbt-001-default-rtdb.europe-west1.firebasedatabase.app/users/${uid}.json`;
+    const response = await fetch(dbUrl);
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (!data) return null;
     return mapUserDbToJs(data);
   },
 
@@ -118,12 +120,18 @@ export const userService = {
     if (data.creditUsed !== undefined) mapped.credit_used = data.creditUsed;
     if (data.isActive !== undefined) mapped.is_active = data.isActive;
 
-    const { error } = await supabase
-      .from('users')
-      .update(mapped)
-      .eq('id', uid);
+    const dbUrl = `https://nbt-001-default-rtdb.europe-west1.firebasedatabase.app/users/${uid}.json`;
+    const response = await fetch(dbUrl, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(mapped)
+    });
 
-    if (error) throw error;
+    if (!response.ok) {
+      throw new Error(`Failed to update user profile: ${response.statusText}`);
+    }
   }
 };
 

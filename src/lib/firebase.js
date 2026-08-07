@@ -1,9 +1,139 @@
-import { supabase } from './supabase';
-
-// Mock DB, Storage and Auth reference objects
+// Mock DB and Storage reference objects
 export const db = { type: 'firestore' };
 export const storage = { type: 'storage' };
-export const auth = supabase.auth;
+
+// Real-time listener registry for auth state changes
+const listeners = new Set();
+let currentUserSession = null;
+
+// Initialize session from LocalStorage (if on client side)
+if (typeof window !== 'undefined') {
+  try {
+    const saved = localStorage.getItem('nbt_firebase_user');
+    if (saved) {
+      currentUserSession = JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error("Failed to load saved session:", e);
+  }
+}
+
+function triggerListeners(event, session) {
+  listeners.forEach(cb => {
+    try {
+      cb(event, session);
+    } catch (e) {
+      console.error("Auth listener error:", e);
+    }
+  });
+}
+
+const FIREBASE_API_KEY = "AIzaSyCJhjyEPsQYbUj52fDmPfEaQABWUzx84pA";
+
+export const auth = {
+  async getSession() {
+    return { data: { session: currentUserSession } };
+  },
+
+  onAuthStateChange(callback) {
+    listeners.add(callback);
+    // Fire initially with current status
+    callback(currentUserSession ? 'SIGNED_IN' : 'SIGNED_OUT', currentUserSession);
+
+    return {
+      data: {
+        subscription: {
+          unsubscribe() {
+            listeners.delete(callback);
+          }
+        }
+      }
+    };
+  },
+
+  async signInWithPassword({ email, password }) {
+    try {
+      const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, returnSecureToken: true })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error?.message || "Sign in failed");
+      }
+
+      const authData = await res.json();
+      const session = {
+        user: {
+          id: authData.localId,
+          email: authData.email,
+        },
+        access_token: authData.idToken,
+        refresh_token: authData.refreshToken
+      };
+
+      currentUserSession = session;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nbt_firebase_user', JSON.stringify(session));
+      }
+
+      triggerListeners('SIGNED_IN', session);
+      return { data: session, error: null };
+    } catch (err) {
+      console.error("Firebase Auth sign in error:", err);
+      return { data: null, error: err };
+    }
+  },
+
+  async signUp({ email, password }) {
+    try {
+      const url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, returnSecureToken: true })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error?.message || "Sign up failed");
+      }
+
+      const authData = await res.json();
+      const session = {
+        user: {
+          id: authData.localId,
+          email: authData.email,
+        },
+        access_token: authData.idToken,
+        refresh_token: authData.refreshToken
+      };
+
+      currentUserSession = session;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nbt_firebase_user', JSON.stringify(session));
+      }
+
+      triggerListeners('SIGNED_IN', session);
+      return { data: session, error: null };
+    } catch (err) {
+      console.error("Firebase Auth sign up error:", err);
+      return { data: null, error: err };
+    }
+  },
+
+  async signOut() {
+    currentUserSession = null;
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('nbt_firebase_user');
+    }
+    triggerListeners('SIGNED_OUT', null);
+    return { error: null };
+  }
+};
 
 
 

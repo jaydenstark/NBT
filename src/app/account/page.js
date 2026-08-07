@@ -8,7 +8,7 @@ import FloatingContact from '../../components/layout/FloatingContact';
 import { useCart } from '../../hooks/useCart';
 import InvoiceModal from '../../components/shop/InvoiceModal';
 import { useAuthUser } from '../../hooks/useAuthUser';
-import { supabase } from '../../lib/supabase';
+import { auth } from '../../lib/firebase';
 import { userService } from '../../services/db';
 
 export default function AccountPage() {
@@ -197,7 +197,7 @@ export default function AccountPage() {
         }
 
         // Create Supabase Auth user
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await auth.signUp({
           email,
           password
         });
@@ -226,7 +226,7 @@ export default function AccountPage() {
           throw new Error('Please provide both email and password.');
         }
         // Log in
-        const { error: signInError } = await supabase.auth.signInWithPassword({
+        const { error: signInError } = await auth.signInWithPassword({
           email,
           password
         });
@@ -250,7 +250,7 @@ export default function AccountPage() {
   // Sign out corporate user
   const handleSignOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
+      const { error } = await auth.signOut();
       if (error) throw error;
       setAuthMode('login');
     } catch (error) {

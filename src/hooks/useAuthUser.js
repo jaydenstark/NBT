@@ -1,33 +1,26 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { auth } from '../lib/firebase';
+import { userService } from '../services/db';
 
 export function useAuthUser() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUserProfile = async (supabaseUser) => {
+    const fetchUserProfile = async (firebaseUser) => {
       try {
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', supabaseUser.id)
-          .single();
-
-        if (error && error.code !== 'PGRST116') {
-          console.error("Error fetching user profile:", error);
-        }
+        const data = await userService.getUserProfile(firebaseUser.id);
 
         if (data) {
           setUser({
-            uid: supabaseUser.id,
-            email: supabaseUser.email,
+            uid: firebaseUser.id,
+            email: firebaseUser.email,
             ...data
           });
         } else {
           setUser({
-            uid: supabaseUser.id,
-            email: supabaseUser.email,
+            uid: firebaseUser.id,
+            email: firebaseUser.email,
             role: 'buyer'
           });
         }
@@ -40,7 +33,7 @@ export function useAuthUser() {
 
     const getInitialSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await auth.getSession();
         if (session?.user) {
           await fetchUserProfile(session.user);
         } else {
@@ -55,7 +48,7 @@ export function useAuthUser() {
 
     getInitialSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         await fetchUserProfile(session.user);
       } else {
