@@ -189,7 +189,7 @@ export const productService = {
       if (!img || typeof img !== 'string') return false;
       const trimmed = img.trim();
       if (trimmed === '') return false;
-      if (trimmed === '/PRODUCTS%20/Neat/neat-all-purpose-floral-2l.png') return false;
+      if (img.trim() === '/PRODUCTS/Neat/all-neat-all-purpose-cleaner-floral-2l.png') return false;
       return true;
     };
 

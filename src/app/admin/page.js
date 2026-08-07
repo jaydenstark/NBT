@@ -1613,7 +1613,7 @@ Thank you! 🧪🛡️`;
     quantity: 100,
     status: 'Published',
     sizes: [{ size: '1L', price: 25, qtyInBox: 1 }],
-    image: '/PRODUCTS%20/Neat/neat-all-purpose-floral-2l.png' // Default placeholder
+    image: '/PRODUCTS/Neat/all-neat-all-purpose-cleaner-floral-2l.png' // Default placeholder
   });
 
   // Unified click-outside event listener for B2B dropdowns/popups
@@ -1917,7 +1917,7 @@ Thank you! 🧪🛡️`;
         quantity: 100,
         status: 'Published',
         sizes: [{ size: '1L', price: 25, qtyInBox: 1 }],
-        image: '/PRODUCTS%20/Neat/neat-all-purpose-floral-2l.png'
+        image: '/PRODUCTS/Neat/all-neat-all-purpose-cleaner-floral-2l.png'
       });
     } catch (error) {
       console.error("Save product failed:", error);
@@ -2004,7 +2004,7 @@ Thank you! 🧪🛡️`;
           const type = String(getRowVal(row, ['Type', 'type']) || 'retail').toLowerCase() === 'industrial' ? 'industrial' : 'retail';
           const category = getRowVal(row, ['Category', 'category', 'Department']) || 'Household Cleaners';
           const description = getRowVal(row, ['Description', 'description', 'Sales Description']) || 'Concentrated clean formulations Direct from manufacturer.';
-          const image = getRowVal(row, ['Image', 'image', 'Photo']) || '/PRODUCTS%20/Neat/neat-all-purpose-floral-2l.png';
+          const image = getRowVal(row, ['Image', 'image', 'Photo']) || '/PRODUCTS/Neat/all-neat-all-purpose-cleaner-floral-2l.png';
           const quantity = parseInt(getRowVal(row, ['Quantity', 'quantity', 'Stock', 'Initial Stock'])) || 100;
 
           const purchaseDescription = getRowVal(row, ['Purchase Description', 'purchaseDescription', 'PurchaseDescription', 'Purchase Notes']) || `Purchase of ${name}`;
@@ -2086,7 +2086,7 @@ Thank you! 🧪🛡️`;
       quantity: 100,
       status: 'Published',
       sizes: [{ size: '1L', price: 25, qtyInBox: 1 }],
-      image: '/PRODUCTS%20/Neat/neat-all-purpose-floral-2l.png'
+      image: '/PRODUCTS/Neat/all-neat-all-purpose-cleaner-floral-2l.png'
     });
     setEditingProductId(null);
     setIsEditing(false);
@@ -2107,7 +2107,7 @@ Thank you! 🧪🛡️`;
       quantity: product.quantity !== undefined ? product.quantity : 100,
       status: product.status || 'Published',
       sizes: product.sizes && product.sizes.length > 0 ? product.sizes.map(s => ({ ...s, qtyInBox: s.qtyInBox || 1 })) : [{ size: '1L', price: 25, qtyInBox: 1 }],
-      image: product.image || '/PRODUCTS%20/Neat/neat-all-purpose-floral-2l.png'
+      image: product.image || '/PRODUCTS/Neat/all-neat-all-purpose-cleaner-floral-2l.png'
     });
     setEditingProductId(product.id);
     setIsEditing(true);
