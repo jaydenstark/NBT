@@ -5,12 +5,7 @@ export const db = { type: 'firestore' };
 export const storage = { type: 'storage' };
 export const auth = supabase.auth;
 
-// Helper to check if a string is a valid UUID
-function isValidUUID(str) {
-  if (typeof str !== 'string') return false;
-  const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return regex.test(str);
-}
+
 
 // ==========================================
 // FIRESTORE COMPATIBILITY LAYER
@@ -30,92 +25,101 @@ export function serverTimestamp() {
 
 export async function addDoc(collectionRef, data) {
   const tableName = collectionRef.name;
-  
-  // Format keys to snake_case if necessary
   const formattedData = formatKeysForDb(tableName, data);
+  const dbUrl = `https://nbt-001-default-rtdb.europe-west1.firebasedatabase.app/${tableName}.json`;
 
-  const { data: insertedRow, error } = await supabase
-    .from(tableName)
-    .insert([formattedData])
-    .select()
-    .single();
+  const response = await fetch(dbUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(formattedData)
+  });
 
-  if (error) {
-    console.error(`Supabase error inserting into ${tableName}:`, error);
-    throw error;
+  if (!response.ok) {
+    throw new Error(`Failed to add document to ${tableName}: ${response.statusText}`);
   }
 
-  return { id: insertedRow.id };
+  const result = await response.json();
+  return { id: result.name };
 }
 
 export async function updateDoc(docRef, data) {
   const tableName = docRef.name;
   const docId = docRef.id;
-
   const formattedData = formatKeysForDb(tableName, data);
+  const dbUrl = `https://nbt-001-default-rtdb.europe-west1.firebasedatabase.app/${tableName}/${docId}.json`;
 
-  // If table is users/orders and docId is not a valid UUID, don't query
-  if ((tableName === 'users' || tableName === 'orders') && !isValidUUID(docId)) {
-    console.warn(`Skipping update on ${tableName} for invalid UUID: ${docId}`);
-    return;
-  }
+  const response = await fetch(dbUrl, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(formattedData)
+  });
 
-  const { error } = await supabase
-    .from(tableName)
-    .update(formattedData)
-    .eq('id', docId);
-
-  if (error) {
-    console.error(`Supabase error updating ${tableName} with ID ${docId}:`, error);
-    throw error;
+  if (!response.ok) {
+    throw new Error(`Failed to update document in ${tableName}: ${response.statusText}`);
   }
 }
 
 export async function deleteDoc(docRef) {
   const tableName = docRef.name;
   const docId = docRef.id;
+  const dbUrl = `https://nbt-001-default-rtdb.europe-west1.firebasedatabase.app/${tableName}/${docId}.json`;
 
-  if ((tableName === 'users' || tableName === 'orders') && !isValidUUID(docId)) {
-    console.warn(`Skipping delete on ${tableName} for invalid UUID: ${docId}`);
-    return;
-  }
+  const response = await fetch(dbUrl, {
+    method: 'DELETE'
+  });
 
-  const { error } = await supabase
-    .from(tableName)
-    .delete()
-    .eq('id', docId);
-
-  if (error) {
-    console.error(`Supabase error deleting from ${tableName} with ID ${docId}:`, error);
-    throw error;
+  if (!response.ok) {
+    throw new Error(`Failed to delete document from ${tableName}: ${response.statusText}`);
   }
 }
 
 export function onSnapshot(ref, callback, errorCallback) {
   const tableName = ref.name;
-
   let isSubscribed = true;
 
   const fetchAndTrigger = async () => {
+    if (!isSubscribed) return;
     try {
-      const { data, error } = await supabase
-        .from(tableName)
-        .select('*');
+      const dbUrl = `https://nbt-001-default-rtdb.europe-west1.firebasedatabase.app/${tableName}.json`;
+      const response = await fetch(dbUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data: ${response.statusText}`);
+      }
+      const rawData = await response.json();
 
-      if (error) throw error;
+      let docs = [];
+      if (Array.isArray(rawData)) {
+        docs = rawData
+          .map((item, index) => {
+            if (item === null) return null;
+            const mappedRow = mapRowFromDb(tableName, { ...item, id: index.toString() });
+            return {
+              id: index.toString(),
+              data: () => mappedRow
+            };
+          })
+          .filter(item => item !== null);
+      } else if (rawData && typeof rawData === 'object') {
+        docs = Object.keys(rawData).map(key => {
+          const mappedRow = mapRowFromDb(tableName, { ...rawData[key], id: key });
+          return {
+            id: key,
+            data: () => mappedRow
+          };
+        });
+      }
 
-      if (!isSubscribed) return;
-
-      const docs = (data || []).map(row => ({
-        id: row.id,
-        data: () => mapRowFromDb(tableName, row)
-      }));
-
-      callback({
-        docs,
-        empty: docs.length === 0,
-        forEach: (fn) => docs.forEach(fn)
-      });
+      if (isSubscribed) {
+        callback({
+          docs,
+          empty: docs.length === 0,
+          forEach: (fn) => docs.forEach(fn)
+        });
+      }
     } catch (err) {
       console.error(`onSnapshot error for ${tableName}:`, err);
       if (errorCallback) errorCallback(err);
@@ -124,24 +128,12 @@ export function onSnapshot(ref, callback, errorCallback) {
 
   fetchAndTrigger();
 
-  // Subscribe to changes in Supabase
-  const uniqueId = Math.random().toString(36).substring(2, 9);
-  const channel = supabase
-    .channel(`compat-listener-${tableName}-${uniqueId}`)
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: tableName },
-      () => {
-        fetchAndTrigger();
-      }
-    )
-    .subscribe();
+  const intervalId = setInterval(fetchAndTrigger, 5000);
 
   return () => {
     isSubscribed = false;
-    supabase.removeChannel(channel);
-  };
-}
+    clearInterval(intervalId);
+  };}
 
 // ==========================================
 // STORAGE COMPATIBILITY LAYER
