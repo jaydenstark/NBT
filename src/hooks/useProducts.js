@@ -1,77 +1,57 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { useState, useEffect } from 'react';
+import { db, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from '../lib/firebase';
 
 export function useProducts() {
   const [products, setProducts] = useState([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const fetchProducts = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*');
-
-      if (error) throw error;
-
-      if (data) {
-        // Sort: products with images first, products without images last
-        const isActualImage = (img) => {
-          if (!img || typeof img !== 'string') return false;
-          const trimmed = img.trim();
-          if (trimmed === '') return false;
-          if (trimmed === '/PRODUCTS/Neat/all-neat-all-purpose-cleaner-floral-2l.png') return false;
-          return true;
-        };
-
-        const sorted = [...data].sort((a, b) => {
-          const aHasImage = isActualImage(a.image);
-          const bHasImage = isActualImage(b.image);
-          if (aHasImage && !bHasImage) return -1;
-          if (!aHasImage && bHasImage) return 1;
-          return 0;
-        });
-
-        setProducts(sorted);
-      }
-    } catch (error) {
-      console.error("Error fetching products from Supabase:", error);
-    } finally {
-      setIsLoaded(true);
-    }
-  }, []);
-
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchProducts();
+    const productsRef = collection(db, 'products');
+    const unsubscribe = onSnapshot(productsRef, (snapshot) => {
+      const docs = snapshot.docs.map(docSnapshot => {
+        return {
+          id: docSnapshot.id,
+          ...docSnapshot.data()
+        };
+      });
 
-    // Set up real-time listener for updates
-    const uniqueChannelId = `public-products-changes-${Math.random().toString(36).substring(2, 9)}`;
-    const channel = supabase
-      .channel(uniqueChannelId)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'products' },
-        () => {
-          fetchProducts();
-        }
-      )
-      .subscribe();
+      // Sort: products with images first, products without images last
+      const isActualImage = (img) => {
+        if (!img || typeof img !== 'string') return false;
+        const trimmed = img.trim();
+        if (trimmed === '') return false;
+        if (trimmed === '/PRODUCTS/Neat/all-neat-all-purpose-cleaner-floral-2l.png') return false;
+        return true;
+      };
+
+      const sorted = [...docs].sort((a, b) => {
+        const aHasImage = isActualImage(a.image);
+        const bHasImage = isActualImage(b.image);
+        if (aHasImage && !bHasImage) return -1;
+        if (!aHasImage && bHasImage) return 1;
+        return 0;
+      });
+
+      setProducts(sorted);
+      setIsLoaded(true);
+    }, (error) => {
+      console.error("Error listening to products:", error);
+      setIsLoaded(true);
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      unsubscribe();
     };
-  }, [fetchProducts]);
+  }, []);
 
   const addProduct = async (product) => {
     try {
+      const productsRef = collection(db, 'products');
       // eslint-disable-next-line no-unused-vars
       const { id: _, ...productData } = product;
-      const { error } = await supabase
-        .from('products')
-        .insert([productData]);
-      if (error) throw error;
+      await addDoc(productsRef, productData);
     } catch (error) {
       console.error("Error adding product: ", error);
     }
@@ -80,11 +60,8 @@ export function useProducts() {
   const updateProduct = async (updatedProduct) => {
     try {
       const { id, ...productData } = updatedProduct;
-      const { error } = await supabase
-        .from('products')
-        .update(productData)
-        .eq('id', id);
-      if (error) throw error;
+      const productRef = doc(db, 'products', id);
+      await updateDoc(productRef, productData);
     } catch (error) {
       console.error("Error updating product: ", error);
     }
@@ -92,11 +69,8 @@ export function useProducts() {
 
   const deleteProduct = async (id) => {
     try {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
+      const productRef = doc(db, 'products', id);
+      await deleteDoc(productRef);
     } catch (error) {
       console.error("Error deleting product: ", error);
     }
