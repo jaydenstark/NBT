@@ -152,33 +152,44 @@ export function ref(storageInstance, path) {
 }
 
 export async function uploadBytes(storageRef, file) {
-  const path = storageRef.path;
-  // Clean up path: e.g. "products/image.png"
-  const cleanPath = path.replace(/^\/+/, '');
+  const path = storageRef.path.replace(/^\/+/, '');
+  const bucket = "nbt-001.firebasestorage.app";
+  const uploadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o?name=${encodeURIComponent(path)}`;
 
-  // Upload to Supabase Storage bucket 'nbt-products'
-  const { data, error } = await supabase.storage
-    .from('nbt-products')
-    .upload(cleanPath, file, {
-      upsert: true
-    });
+  const response = await fetch(uploadUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': file.type || 'application/octet-stream'
+    },
+    body: file
+  });
 
-  if (error) {
-    console.error("Supabase Storage upload error:", error);
-    throw error;
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error("Firebase Storage upload error:", errText);
+    throw new Error(`Upload failed: ${response.statusText}`);
   }
 
-  return data;
+  const data = await response.json();
+  return {
+    ...data,
+    ref: storageRef
+  };
 }
 
 export async function getDownloadURL(storageRef) {
   const path = storageRef.path.replace(/^\/+/, '');
+  const bucket = "nbt-001.firebasestorage.app";
+  const metadataUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(path)}`;
 
-  const { data } = supabase.storage
-    .from('nbt-products')
-    .getPublicUrl(path);
+  const response = await fetch(metadataUrl);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch metadata: ${response.statusText}`);
+  }
 
-  return data.publicUrl;
+  const data = await response.json();
+  const token = data.downloadTokens;
+  return `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(path)}?alt=media&token=${token}`;
 }
 
 // ==========================================
